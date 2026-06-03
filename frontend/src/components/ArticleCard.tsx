@@ -23,31 +23,24 @@ export default function ArticleCard({ article }: Props) {
       className={styles.card}
     >
       <div className={styles.meta}>
-        {article.categoryName && (
-          <span className={styles.category}>{article.categoryName}</span>
-        )}
         <span className={styles.date}>
           {formatDate(article.publishedAt ?? article.createdAt)}
         </span>
+        {article.author && (
+          <span className={styles.author}>{article.author}</span>
+        )}
       </div>
       <h2 className={styles.title}>{article.title}</h2>
       {article.description && (
         <p className={styles.description}>{article.description}</p>
       )}
-      <div className={styles.footer}>
-        {article.author && (
-          <span className={styles.author}>{article.author}</span>
-        )}
-        {article.tags.length > 0 && (
-          <ul className={styles.tags}>
-            {article.tags.map((tag) => (
-              <li key={tag} className={styles.tag}>
-                {tag}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {article.tags.length > 0 && (
+        <ul className={styles.tags}>
+          {article.tags.map((tag) => (
+            <li key={tag} className={styles.tag}>#{tag}</li>
+          ))}
+        </ul>
+      )}
     </a>
   )
 }

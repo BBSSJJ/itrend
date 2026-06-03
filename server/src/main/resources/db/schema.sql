@@ -27,8 +27,7 @@ CREATE TABLE IF NOT EXISTS articles (
     published_at TIMESTAMP,
     created_at   TIMESTAMP     NOT NULL DEFAULT NOW(),
     summary      TEXT,
-    source_id    BIGINT        REFERENCES sources(id),
-    category_id  BIGINT        REFERENCES categories(id)
+    source_id    BIGINT        REFERENCES sources(id)
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -43,6 +42,6 @@ CREATE TABLE IF NOT EXISTS article_tags (
 );
 
 -- 자주 쓰는 쿼리 최적화용 인덱스
-CREATE INDEX IF NOT EXISTS idx_articles_category_id  ON articles(category_id);
 CREATE INDEX IF NOT EXISTS idx_articles_source_id    ON articles(source_id);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tags_name             ON tags(name);

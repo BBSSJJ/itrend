@@ -51,9 +51,9 @@ async function collectOne(source) {
     // 각 아티클에 태그와 카테고리 부여 (LLM 배치 호출)
     const tagged = await tagBatch(articles)
 
-    // HN/Dev.to는 IT 외 콘텐츠가 많으므로 카테고리 미매칭(general) 기사 제외
+    // HN/Dev.to는 IT 외 콘텐츠가 많으므로 태그가 없는 기사(IT 무관) 제외
     const filtered = source.adapterType !== 'rss'
-      ? tagged.filter(a => a.categorySlug !== 'general')
+      ? tagged.filter(a => a.tags && a.tags.length > 0)
       : tagged
 
     if (filtered.length === 0) {

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/articles")
 @RequiredArgsConstructor
 public class ArticleController {
 
@@ -23,7 +22,7 @@ public class ArticleController {
     @Value("${collector.api-key}")
     private String collectorApiKey;
 
-    @PostMapping("/batch")
+    @PostMapping("/api/articles/batch")
     public ResponseEntity<Map<String, Integer>> saveBatch(
             @RequestHeader(value = "X-API-Key", required = false) String apiKey,
             @RequestBody List<ArticleSaveRequest> requests) {
@@ -37,12 +36,19 @@ public class ArticleController {
         return ResponseEntity.ok(Map.of("saved", saved, "skipped", skipped));
     }
 
-    @GetMapping
+    @GetMapping("/api/articles")
     public Page<ArticleResponse> getArticles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String categorySlug) {
+            @RequestParam(required = false) String tag) {
 
-        return articleService.getArticles(page, size, categorySlug);
+        return articleService.getArticles(page, size, tag);
+    }
+
+    @GetMapping("/api/tags/popular")
+    public List<String> getPopularTags(
+            @RequestParam(defaultValue = "15") int limit) {
+
+        return articleService.getPopularTags(limit);
     }
 }
