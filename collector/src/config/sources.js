@@ -1,0 +1,106 @@
+// 소스 추가/제거: 이 파일만 수정
+// adapterType: 'rss' | 'hn_api' | 'devto_api'
+// DB 연동 후에는 이 파일 대신 DB에서 로드
+module.exports = [
+  // ── 국내 기술 블로그 (RSS) ──────────────────────────
+  {
+    id: 'yozm',
+    name: '요즘IT',
+    url: 'https://yozm.wishket.com/magazine/itservice/feed/',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'kakao-tech',
+    name: '카카오 기술 블로그',
+    url: 'https://tech.kakao.com/feed/',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'woowahan',
+    name: '우아한형제들 기술 블로그',
+    url: 'https://techblog.woowahan.com/feed/',
+    adapterType: 'rss',
+    isActive: false, // Cloudflare Bot Protection으로 차단됨
+    config: {},
+  },
+  {
+    id: 'toss-tech',
+    name: '토스 기술 블로그',
+    url: 'https://toss.tech/rss.xml',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'line-engineering',
+    name: 'LINE Engineering',
+    url: 'https://engineering.linecorp.com/ko/feed',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'naver-d2',
+    name: 'NAVER D2',
+    url: 'https://d2.naver.com/d2.atom',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+
+  // ── 해외 기술 블로그 (RSS) ──────────────────────────
+  {
+    id: 'aws-blog',
+    name: 'AWS Blog',
+    url: 'https://aws.amazon.com/blogs/aws/feed/',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'spring-blog',
+    name: 'Spring Blog',
+    url: 'https://spring.io/blog.atom',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'thenewstack',
+    name: 'The New Stack',
+    url: 'https://thenewstack.io/feed/',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'infoq',
+    name: 'InfoQ',
+    url: 'https://feed.infoq.com/',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+
+  // ── API ────────────────────────────────────────────
+  {
+    id: 'hackernews',
+    name: 'Hacker News',
+    url: 'https://hacker-news.firebaseio.com/v0',
+    adapterType: 'hn_api',
+    isActive: true,
+    config: { limit: 30 },
+  },
+  {
+    id: 'devto',
+    name: 'Dev.to',
+    url: 'https://dev.to/api/articles',
+    adapterType: 'devto_api',
+    isActive: true,
+    config: { limit: 30 },
+  },
+]

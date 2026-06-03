@@ -1,0 +1,42 @@
+# ==============================
+# OS / Editor
+# ==============================
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# ==============================
+# Node.js (collector, frontend)
+# ==============================
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# ==============================
+# 환경 변수 (절대 커밋 금지)
+# ==============================
+.env
+.env.local
+.env.*.local
+
+# ==============================
+# collector 런타임 파일
+# ==============================
+collector/state.json
+
+# ==============================
+# Spring Boot (server)
+# ==============================
+target/
+*.jar
+*.war
+*.class
+server/src/main/resources/application-local.properties
+server/src/main/resources/application-local.yml
+
+# ==============================
+# React (frontend)
+# ==============================
+frontend/dist/
+frontend/.env*
