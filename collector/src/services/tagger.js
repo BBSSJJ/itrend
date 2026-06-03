@@ -1,50 +1,86 @@
 /**
- * 아티클에 자동으로 태그와 카테고리를 부여하는 서비스.
+ * LLM 기반 태거 (Groq - llama-3.1-8b-instant).
  *
- * 동작 방식:
- *   1. 아티클의 제목 + 설명을 소문자로 합친 문자열을 만든다
- *   2. categories.js의 각 카테고리 키워드와 매칭한다
- *   3. 가장 많이 매칭된 카테고리를 주 카테고리로 선정한다
- *   4. 매칭된 키워드들이 태그가 된다
- *
- * 새 카테고리나 키워드 추가는 categories.js만 수정하면 된다. 이 파일은 건드릴 필요 없음.
+ * 소스 단위로 기사를 묶어 한 번의 API 호출로 처리(배치)해서 속도와 비용을 최적화한다.
+ * GROQ_API_KEY 미설정 시 keywordTagger로 폴백한다.
  */
-const categories = require('../config/categories')
+const Groq = require('groq-sdk')
+const { tag: keywordTag } = require('./keywordTagger')
 
-/**
- * 아티클 객체를 받아 tags와 categorySlug를 추가해서 반환한다.
- * 원본 객체를 수정하지 않고 새 객체를 반환한다 (불변성 유지).
- */
-// 키워드를 단어 경계(\b)로 매칭 — "ai"가 "gmail"에 걸리는 오탐 방지
-function matchKeyword(text, kw) {
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`\\b${escaped}\\b`).test(text)
+const CATEGORIES = {
+  frontend:     'React, Vue, Angular, CSS, HTML, JavaScript, TypeScript, 웹 UI/UX',
+  backend:      'Spring, Java, Node.js, Python, Go, Rust, API 설계, 서버, DB, ORM',
+  cloud:        'AWS, GCP, Azure, Kubernetes, Docker, 컨테이너, 서버리스, 클라우드 인프라',
+  devops:       'CI/CD, 모니터링, 인프라, Linux, GitOps, Ansible, Grafana, 배포 자동화',
+  ai:           'AI, ML, LLM, GPT, Claude, 딥러닝, 머신러닝, 자연어처리, 생성형 AI',
+  architecture: '소프트웨어 설계, DDD, MSA, 이벤트 드리븐, 클린 아키텍처, 리팩토링, SOLID',
+  general:      'IT 관련이지만 위 카테고리에 해당하지 않는 내용',
 }
 
-function tag(article) {
-  const text = `${article.title ?? ''} ${article.description ?? ''}`.toLowerCase()
+const CATEGORY_LIST = Object.entries(CATEGORIES)
+  .map(([slug, desc]) => `- ${slug}: ${desc}`)
+  .join('\n')
 
-  const matchedTags = new Set()
-  let bestCategory = null
-  let bestScore = 0
+let client = null
 
-  for (const category of categories) {
-    const hits = category.keywords.filter(kw => matchKeyword(text, kw))
-    if (hits.length > 0) {
-      hits.forEach(kw => matchedTags.add(kw))
-      // 더 많은 키워드가 매칭된 카테고리를 주 카테고리로 선정
-      if (hits.length > bestScore) {
-        bestScore = hits.length
-        bestCategory = category.slug
+function getClient() {
+  if (!client) client = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  return client
+}
+
+async function tagBatch(articles) {
+  if (articles.length === 0) return []
+
+  if (!process.env.GROQ_API_KEY) {
+    console.warn('[TAGGER] GROQ_API_KEY 없음 → 키워드 방식으로 폴백')
+    return articles.map(a => keywordTag(a))
+  }
+
+  const input = articles.map((a, i) => ({
+    index: i,
+    title: a.title ?? '',
+    description: a.description ?? '',
+  }))
+
+  const prompt = `IT 기사 목록을 분류해주세요.
+
+카테고리:
+${CATEGORY_LIST}
+
+기사 목록:
+${JSON.stringify(input)}
+
+각 기사에 대해 아래 JSON 배열 형식으로만 응답하세요. 다른 텍스트 없이 JSON만:
+[{"index": 0, "categorySlug": "backend", "tags": ["spring", "jpa", "java"]}]
+
+태그 규칙:
+- 기사의 핵심 기술/개념 키워드 2~5개
+- 영어 소문자, 띄어쓰기는 하이픈으로 (예: "spring-boot", "machine-learning")`
+
+  try {
+    const response = await getClient().chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2048,
+    })
+
+    const text = response.choices[0].message.content.trim()
+    const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+    const results = JSON.parse(json)
+
+    return articles.map((article, i) => {
+      const r = results.find(r => r.index === i)
+      if (!r) return keywordTag(article)
+      return {
+        ...article,
+        categorySlug: r.categorySlug ?? 'general',
+        tags: Array.isArray(r.tags) ? r.tags : [],
       }
-    }
-  }
-
-  return {
-    ...article,               // 기존 필드 전부 유지 (스프레드 연산자)
-    tags: [...matchedTags],   // Set을 배열로 변환
-    categorySlug: bestCategory ?? 'general',  // 아무 카테고리도 매칭 안 되면 'general'
+    })
+  } catch (err) {
+    console.warn(`[TAGGER] LLM 호출 실패 (${err.message}) → 키워드 방식으로 폴백`)
+    return articles.map(a => keywordTag(a))
   }
 }
 
-module.exports = { tag }
+module.exports = { tagBatch }
