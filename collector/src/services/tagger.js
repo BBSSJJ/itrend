@@ -15,17 +15,21 @@ const categories = require('../config/categories')
  * 아티클 객체를 받아 tags와 categorySlug를 추가해서 반환한다.
  * 원본 객체를 수정하지 않고 새 객체를 반환한다 (불변성 유지).
  */
-function tag(article) {
-  // 제목과 설명을 합쳐 소문자로 변환. null/undefined는 빈 문자열로 처리
-  const text = `${article.title ?? ''} ${article.description ?? ''}`.toLowerCase()
-  // ?? (Nullish coalescing): null이나 undefined일 때만 기본값 사용. Java의 Optional.orElse와 유사
+// 키워드를 단어 경계(\b)로 매칭 — "ai"가 "gmail"에 걸리는 오탐 방지
+function matchKeyword(text, kw) {
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`).test(text)
+}
 
-  const matchedTags = new Set()  // Set: 중복 없는 집합 (같은 태그가 여러 번 매칭돼도 한 번만 저장)
+function tag(article) {
+  const text = `${article.title ?? ''} ${article.description ?? ''}`.toLowerCase()
+
+  const matchedTags = new Set()
   let bestCategory = null
   let bestScore = 0
 
   for (const category of categories) {
-    const hits = category.keywords.filter(kw => text.includes(kw))  // 매칭된 키워드 목록
+    const hits = category.keywords.filter(kw => matchKeyword(text, kw))
     if (hits.length > 0) {
       hits.forEach(kw => matchedTags.add(kw))
       // 더 많은 키워드가 매칭된 카테고리를 주 카테고리로 선정

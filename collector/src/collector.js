@@ -51,8 +51,18 @@ async function collectOne(source) {
     // 각 아티클에 태그와 카테고리 부여
     const tagged = articles.map(a => tag(a))
 
+    // HN/Dev.to는 IT 외 콘텐츠가 많으므로 카테고리 미매칭(general) 기사 제외
+    const filtered = source.adapterType !== 'rss'
+      ? tagged.filter(a => a.categorySlug !== 'general')
+      : tagged
+
+    if (filtered.length === 0) {
+      console.log(`  새 항목 없음 (카테고리 필터 후)`)
+      return { count: 0, error: null }
+    }
+
     // Spring Boot로 전송 (현재는 개발 모드라 콘솔 출력)
-    await send(tagged)
+    await send(filtered)
 
     // 수집 성공 후 state 업데이트
     const stateUpdate = { lastFetched: new Date().toISOString() }
@@ -63,7 +73,7 @@ async function collectOne(source) {
     }
     state.update(source.id, stateUpdate)
 
-    return { count: tagged.length, error: null }
+    return { count: filtered.length, error: null }
   } catch (err) {
     return { count: 0, error: err.message }
   }
