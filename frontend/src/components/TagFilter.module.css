@@ -1,0 +1,28 @@
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn:hover {
+  border-color: #4f8ef7;
+  color: #4f8ef7;
+}
+
+.btn.active {
+  background: #4f8ef7;
+  border-color: #4f8ef7;
+  color: #fff;
+}

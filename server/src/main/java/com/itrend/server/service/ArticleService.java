@@ -5,7 +5,6 @@ import com.itrend.server.domain.Tag;
 import com.itrend.server.dto.ArticleResponse;
 import com.itrend.server.dto.ArticleSaveRequest;
 import com.itrend.server.repository.ArticleRepository;
-import com.itrend.server.repository.CategoryRepository;
 import com.itrend.server.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +23,6 @@ import java.util.List;
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-    private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
 
     @Transactional
@@ -39,15 +37,16 @@ public class ArticleService {
                     .description(req.getDescription())
                     .author(req.getAuthor())
                     .publishedAt(parsePublishedAt(req.getPublishedAt()))
-                    .category(categoryRepository.findBySlug(req.getCategorySlug()).orElse(null))
                     .build();
 
             Article savedArticle = articleRepository.save(article);
 
-            for (String tagName : req.getTags()) {
-                Tag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
-                savedArticle.addTag(tag);
+            if (req.getTags() != null) {
+                for (String tagName : req.getTags()) {
+                    Tag tag = tagRepository.findByName(tagName)
+                            .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
+                    savedArticle.addTag(tag);
+                }
             }
 
             saved++;
@@ -56,12 +55,17 @@ public class ArticleService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ArticleResponse> getArticles(int page, int size, String categorySlug) {
+    public Page<ArticleResponse> getArticles(int page, int size, String tag) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("publishedAt").descending());
-        Page<Article> articles = (categorySlug != null)
-                ? articleRepository.findByCategorySlug(categorySlug, pageable)
+        Page<Article> articles = (tag != null)
+                ? articleRepository.findByTags_Name(tag, pageable)
                 : articleRepository.findAll(pageable);
         return articles.map(ArticleResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getPopularTags(int limit) {
+        return tagRepository.findPopularTags(limit);
     }
 
     private LocalDateTime parsePublishedAt(String publishedAt) {

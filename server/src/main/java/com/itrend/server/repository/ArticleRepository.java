@@ -13,5 +13,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     Optional<Article> findByUrl(String url);
 
-    Page<Article> findByCategorySlug(String categorySlug, Pageable pageable);
+    Page<Article> findByTags_Name(String tagName, Pageable pageable);
 }

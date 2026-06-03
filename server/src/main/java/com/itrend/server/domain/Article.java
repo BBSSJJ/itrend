@@ -44,10 +44,6 @@ public class Article {
     @JoinColumn(name = "source_id")
     private Source source;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
-
     @ManyToMany
     @JoinTable(
             name = "article_tags",
@@ -63,7 +59,7 @@ public class Article {
 
     @Builder
     public Article(String title, String url, String description, String author,
-                   LocalDateTime publishedAt, String summary, Source source, Category category) {
+                   LocalDateTime publishedAt, String summary, Source source) {
         this.title = title;
         this.url = url;
         this.description = description;
@@ -71,7 +67,6 @@ public class Article {
         this.publishedAt = publishedAt;
         this.summary = summary;
         this.source = source;
-        this.category = category;
     }
 
     public void addTag(Tag tag) {

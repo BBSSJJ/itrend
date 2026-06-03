@@ -9,7 +9,7 @@ const sources = require('./config/sources')
 const RssAdapter = require('./adapters/rss')
 const HackerNewsAdapter = require('./adapters/hackernews')
 const DevToAdapter = require('./adapters/devto')
-const { tag } = require('./services/tagger')
+const { tagBatch } = require('./services/tagger')
 const { send } = require('./services/sender')
 const state = require('./services/state')
 
@@ -48,11 +48,21 @@ async function collectOne(source) {
       return { count: 0, error: null }
     }
 
-    // 각 아티클에 태그와 카테고리 부여
-    const tagged = articles.map(a => tag(a))
+    // 각 아티클에 태그와 카테고리 부여 (LLM 배치 호출)
+    const tagged = await tagBatch(articles)
+
+    // HN/Dev.to는 IT 외 콘텐츠가 많으므로 태그가 없는 기사(IT 무관) 제외
+    const filtered = source.adapterType !== 'rss'
+      ? tagged.filter(a => a.tags && a.tags.length > 0)
+      : tagged
+
+    if (filtered.length === 0) {
+      console.log(`  새 항목 없음 (카테고리 필터 후)`)
+      return { count: 0, error: null }
+    }
 
     // Spring Boot로 전송 (현재는 개발 모드라 콘솔 출력)
-    await send(tagged)
+    await send(filtered)
 
     // 수집 성공 후 state 업데이트
     const stateUpdate = { lastFetched: new Date().toISOString() }
@@ -63,7 +73,7 @@ async function collectOne(source) {
     }
     state.update(source.id, stateUpdate)
 
-    return { count: tagged.length, error: null }
+    return { count: filtered.length, error: null }
   } catch (err) {
     return { count: 0, error: err.message }
   }

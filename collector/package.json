@@ -8,9 +8,11 @@
     "collect": "node -e \"require('./src/collector').collect()\""
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.5",
+    "groq-sdk": "^1.2.1",
     "node-cron": "^3.0.3",
     "rss-parser": "^3.13.0"
   }
