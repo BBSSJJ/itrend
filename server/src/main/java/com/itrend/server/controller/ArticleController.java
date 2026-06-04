@@ -2,6 +2,8 @@ package com.itrend.server.controller;
 
 import com.itrend.server.dto.ArticleResponse;
 import com.itrend.server.dto.ArticleSaveRequest;
+import com.itrend.server.dto.ArticleTagUpdateRequest;
+import com.itrend.server.dto.ArticleUntaggedResponse;
 import com.itrend.server.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,5 +52,25 @@ public class ArticleController {
             @RequestParam(defaultValue = "15") int limit) {
 
         return articleService.getPopularTags(limit);
+    }
+
+    @GetMapping("/api/articles/untagged")
+    public List<ArticleUntaggedResponse> getUntaggedArticles(
+            @RequestParam(defaultValue = "50") int limit) {
+
+        return articleService.getUntaggedArticles(limit);
+    }
+
+    @PatchMapping("/api/articles/tags/batch")
+    public ResponseEntity<Map<String, Integer>> updateTagsBatch(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody List<ArticleTagUpdateRequest> requests) {
+
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        int updated = articleService.updateTagsBatch(requests);
+        return ResponseEntity.ok(Map.of("updated", updated));
     }
 }

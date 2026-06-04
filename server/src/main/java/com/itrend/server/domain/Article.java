@@ -37,6 +37,9 @@ public class Article {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "tagged_at")
+    private LocalDateTime taggedAt;
+
     @Column(columnDefinition = "text")
     private String summary;
 
@@ -71,5 +74,11 @@ public class Article {
 
     public void addTag(Tag tag) {
         this.tags.add(tag);
+    }
+
+    public void updateTags(Set<Tag> newTags) {
+        this.tags.clear();
+        this.tags.addAll(newTags);
+        this.taggedAt = LocalDateTime.now();
     }
 }
