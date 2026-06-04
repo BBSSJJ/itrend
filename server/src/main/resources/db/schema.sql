@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS articles (
     author       VARCHAR(200),
     published_at TIMESTAMP,
     created_at   TIMESTAMP     NOT NULL DEFAULT NOW(),
+    tagged_at    TIMESTAMP,
     summary      TEXT,
     source_id    BIGINT        REFERENCES sources(id)
 );
