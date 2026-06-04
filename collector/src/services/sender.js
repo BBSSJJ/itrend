@@ -34,7 +34,7 @@ async function send(articles) {
 // 개발 시 수집 결과를 보기 좋게 콘솔 출력
 function _logArticles(articles) {
   articles.forEach(a => {
-    console.log(`  [${a.categorySlug ?? 'general'}] ${a.title}`)
+    console.log(`  ${a.title}`)
     if (a.tags.length > 0) console.log(`    tags: ${a.tags.join(', ')}`)
     console.log(`    ${a.url}`)
   })

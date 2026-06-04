@@ -1,9 +1,3 @@
-CREATE TABLE IF NOT EXISTS categories (
-    id   BIGSERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    slug VARCHAR(100) NOT NULL UNIQUE
-);
-
 CREATE TABLE IF NOT EXISTS sources (
     id              BIGSERIAL    PRIMARY KEY,
     name            VARCHAR(200) NOT NULL,
