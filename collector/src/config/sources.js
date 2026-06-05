@@ -51,6 +51,46 @@ module.exports = [
     isActive: true,
     config: {},
   },
+  {
+    id: 'kakaopay-tech',
+    name: '카카오페이 기술 블로그',
+    url: 'https://tech.kakaopay.com/rss.xml',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'socar-tech',
+    name: '쏘카 기술 블로그',
+    url: 'https://tech.socarcorp.kr/feed',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'banksalad-tech',
+    name: '뱅크샐러드 기술 블로그',
+    url: 'https://blog.banksalad.com/rss.xml',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'nhn-meetup',
+    name: 'NHN Cloud Meetup',
+    url: 'https://meetup.nhncloud.com/rss',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
+  {
+    id: 'geeknews',
+    name: 'GeekNews',
+    url: 'https://news.hada.io/rss/news',
+    adapterType: 'rss',
+    isActive: true,
+    config: {},
+  },
 
   // ── 해외 기술 블로그 (RSS) ──────────────────────────
   {
