@@ -1,13 +1,42 @@
-/**
- * 수집기 진입점 (Entry Point).
- *
- * `node index.js`로 실행하면:
- *   1. .env 파일의 환경변수를 process.env에 로드 (BE_API_URL, COLLECTOR_API_KEY 등)
- *   2. 스케줄러 등록 (08:00, 18:00 자동 실행)
- *   3. 시작 즉시 1회 수집 실행 (서버 재시작 후 최신 데이터를 바로 채우기 위함)
- */
-require('dotenv').config()          // .env 파일 로드. 반드시 다른 require보다 먼저 실행
+require('dotenv').config()
+const express = require('express')
 const { collect } = require('./src/collector')
-require('./src/scheduler')          // require만 해도 스케줄러가 등록됨
+const { runTaggerJob } = require('./src/tagger-job')
 
-collect()
+const app = express()
+const PORT = process.env.COLLECTOR_PORT || 3001
+
+let collectRunning = false
+let tagRunning = false
+
+app.post('/collect', async (req, res) => {
+  if (collectRunning) {
+    return res.status(409).json({ error: '수집이 이미 실행 중입니다' })
+  }
+  collectRunning = true
+  res.json({ message: '수집 시작' })
+  try {
+    await collect()
+  } finally {
+    collectRunning = false
+  }
+})
+
+app.post('/tag', async (req, res) => {
+  if (tagRunning) {
+    return res.status(409).json({ error: '태깅이 이미 실행 중입니다' })
+  }
+  tagRunning = true
+  res.json({ message: '태깅 시작' })
+  try {
+    await runTaggerJob()
+  } finally {
+    tagRunning = false
+  }
+})
+
+app.listen(PORT, () => {
+  console.log(`[SERVER] 수집기 API 서버 실행 중 (포트: ${PORT})`)
+  console.log(`  POST /collect  — RSS 수집`)
+  console.log(`  POST /tag      — LLM 태깅`)
+})
