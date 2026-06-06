@@ -24,7 +24,7 @@ module.exports = [
     name: '우아한형제들 기술 블로그',
     url: 'https://techblog.woowahan.com/feed/',
     adapterType: 'rss',
-    isActive: false, // Cloudflare Bot Protection으로 차단됨
+    isActive: true,
     config: {},
   },
   {
@@ -56,7 +56,7 @@ module.exports = [
     name: '카카오페이 기술 블로그',
     url: 'https://tech.kakaopay.com/rss.xml',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false, // RSS 피드 자체는 열리나 항목이 비어있음
     config: {},
   },
   {
