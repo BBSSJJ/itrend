@@ -25,9 +25,10 @@ class RssAdapter extends BaseAdapter {
     const feed = await parser.parseURL(this.source.url)
 
     // state.lastFetched가 있으면 그 이후 발행된 것만 필터링 (중복 수집 방지)
+    // pubDate가 없는 항목은 날짜 비교 불가 → 항상 수집 (DB에서 URL 기준 중복 제거)
     const since = this.state.lastFetched ? new Date(this.state.lastFetched) : null
     const items = since
-      ? feed.items.filter(item => item.pubDate && new Date(item.pubDate) > since)
+      ? feed.items.filter(item => !item.pubDate || new Date(item.pubDate) > since)
       : feed.items  // 처음 수집이면 전체 가져옴
 
     return items.map(item => this.normalize(item))
