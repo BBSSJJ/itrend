@@ -15,5 +15,5 @@ public class ArticleSaveRequest {
     private String author;
     private String publishedAt;
     private List<String> tags;
-    private String sourceId;
+    private String sourceCode;
 }

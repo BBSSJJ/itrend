@@ -8,36 +8,41 @@
  */
 const axios = require('axios')
 
-const BE_API_URL = process.env.BE_API_URL || ''      // .env 파일에서 읽어옴. 없으면 빈 문자열
-const API_KEY = process.env.COLLECTOR_API_KEY || ''  // Spring Boot에서 수집기 요청임을 검증하는 키
+function createSender({
+  httpClient = axios,
+  apiUrl = process.env.BE_API_URL || '',
+  apiKey = process.env.COLLECTOR_API_KEY || '',
+  isDev = process.env.NODE_ENV === 'dev',
+} = {}) {
+  return async function sendArticles(articles) {
+    if (!apiUrl || isDev) {
+      _logArticles(articles)
+      return
+    }
 
-async function send(articles) {
-  // 개발 모드이거나 BE URL이 없으면 콘솔에만 출력
-  if (!BE_API_URL || process.env.NODE_ENV === 'dev') {
-    _logArticles(articles)
-    return
-  }
+    // _hnId 같은 내부용 필드는 Spring Boot에 보내지 않음
+    const payload = articles.map(({ _hnId, ...article }) => article)
 
-  // _hnId 같은 내부용 필드는 Spring Boot에 보내지 않음
-  const payload = articles.map(({ _hnId, ...article }) => article)
-
-  try {
-    await axios.post(`${BE_API_URL}/api/articles/batch`, payload, {
-      headers: { 'X-API-Key': API_KEY },
-    })
-  } catch (err) {
-    console.error('[SENDER] 전송 실패:', err.message)
-    throw err  // 호출자(collector.js)에서 에러를 잡을 수 있도록 다시 던짐
+    try {
+      await httpClient.post(`${apiUrl}/api/articles/batch`, payload, {
+        headers: { 'X-API-Key': apiKey },
+      })
+    } catch (err) {
+      console.error('[SENDER] 전송 실패:', err.message)
+      throw err
+    }
   }
 }
+
+const send = createSender()
 
 // 개발 시 수집 결과를 보기 좋게 콘솔 출력
 function _logArticles(articles) {
   articles.forEach(a => {
     console.log(`  ${a.title}`)
-    if (a.tags.length > 0) console.log(`    tags: ${a.tags.join(', ')}`)
+    if (a.tags?.length > 0) console.log(`    tags: ${a.tags.join(', ')}`)
     console.log(`    ${a.url}`)
   })
 }
 
-module.exports = { send }
+module.exports = { createSender, send }

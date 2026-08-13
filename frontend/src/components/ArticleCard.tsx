@@ -23,6 +23,7 @@ export default function ArticleCard({ article }: Props) {
       className={styles.card}
     >
       <div className={styles.meta}>
+        <span className={styles.source}>{article.sourceName}</span>
         <span className={styles.date}>
           {formatDate(article.publishedAt ?? article.createdAt)}
         </span>

@@ -18,6 +18,9 @@ public class Source {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private String code;
+
     @Column(nullable = false)
     private String name;
 
@@ -49,8 +52,9 @@ public class Source {
     private String status;
 
     @Builder
-    public Source(String name, String url, String type, String adapterType,
+    public Source(String code, String name, String url, String type, String adapterType,
                   String config, boolean isActive, String status) {
+        this.code = code;
         this.name = name;
         this.url = url;
         this.type = type;

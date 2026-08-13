@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "collect": "node -e \"require('./src/collector').collect()\""
+    "collect": "node -e \"require('./src/collector').collect()\"",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

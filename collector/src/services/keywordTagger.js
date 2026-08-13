@@ -1,8 +1,11 @@
 const { CANONICAL_TAGS } = require('../config/keywords')
 
 function matchKeyword(text, kw) {
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`\\b${escaped}\\b`).test(text)
+  const pattern = kw
+    .split('-')
+    .map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('(?:-|\\s)+')
+  return new RegExp(`(^|[^a-z0-9])${pattern}(?=$|[^a-z0-9])`).test(text)
 }
 
 function tag(article) {

@@ -7,6 +7,7 @@ import com.itrend.server.dto.ArticleSaveRequest;
 import com.itrend.server.dto.ArticleTagUpdateRequest;
 import com.itrend.server.dto.ArticleUntaggedResponse;
 import com.itrend.server.repository.ArticleRepository;
+import com.itrend.server.repository.SourceRepository;
 import com.itrend.server.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -22,11 +24,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
+    private final SourceRepository sourceRepository;
     private final TagRepository tagRepository;
 
     @Transactional
@@ -35,12 +40,19 @@ public class ArticleService {
         for (ArticleSaveRequest req : requests) {
             if (articleRepository.existsByUrl(req.getUrl())) continue;
 
+            var source = sourceRepository.findByCode(req.getSourceCode())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            BAD_REQUEST,
+                            "Unknown sourceCode: " + req.getSourceCode()
+                    ));
+
             Article article = Article.builder()
                     .title(req.getTitle())
                     .url(req.getUrl())
                     .description(req.getDescription())
                     .author(req.getAuthor())
                     .publishedAt(parsePublishedAt(req.getPublishedAt()))
+                    .source(source)
                     .build();
 
             Article savedArticle = articleRepository.save(article);

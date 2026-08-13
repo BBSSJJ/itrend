@@ -44,7 +44,7 @@ public class Article {
     private String summary;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_id")
+    @JoinColumn(name = "source_id", nullable = false)
     private Source source;
 
     @ManyToMany

@@ -18,6 +18,8 @@ public class ArticleResponse {
     private String author;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
+    private String sourceCode;
+    private String sourceName;
     private List<String> tags;
 
     public static ArticleResponse from(Article article) {
@@ -29,6 +31,8 @@ public class ArticleResponse {
                 .author(article.getAuthor())
                 .publishedAt(article.getPublishedAt())
                 .createdAt(article.getCreatedAt())
+                .sourceCode(article.getSource().getCode())
+                .sourceName(article.getSource().getName())
                 .tags(article.getTags().stream().map(tag -> tag.getName()).toList())
                 .build();
     }
