@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+required_files=(
+  "AGENTS.md"
+  "README.md"
+  "collector/.env.example"
+  "docs/PRODUCT.md"
+  "docs/ARCHITECTURE.md"
+  "docs/QUALITY.md"
+  "docs/plans/README.md"
+  "docs/plans/tech-debt.md"
+)
+
+echo "[check] Harness 파일 확인"
+for relative_path in "${required_files[@]}"; do
+  if [[ ! -f "$repo_root/$relative_path" ]]; then
+    echo "필수 파일이 없습니다: $relative_path" >&2
+    exit 1
+  fi
+done
+
+echo "[check] Collector JavaScript 구문 검사"
+while IFS= read -r -d '' source_file; do
+  node --check "$source_file"
+done < <(find "$repo_root/collector" -path '*/node_modules' -prune -o -name '*.js' -type f -print0)
+
+echo "[check] Collector 테스트"
+npm --prefix "$repo_root/collector" test
+
+echo "[check] PostgreSQL 준비"
+docker compose --project-directory "$repo_root" up -d --wait postgres
+
+echo "[check] Server 테스트"
+(
+  cd "$repo_root/server"
+  ./gradlew test
+)
+
+echo "[check] Frontend 린트"
+npm --prefix "$repo_root/frontend" run lint
+
+echo "[check] Frontend 프로덕션 빌드"
+npm --prefix "$repo_root/frontend" run build
+
+echo "[check] 전체 검증 통과"
