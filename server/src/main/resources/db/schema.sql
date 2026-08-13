@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS sources (
     id              BIGSERIAL    PRIMARY KEY,
+    code            VARCHAR(100) NOT NULL UNIQUE,
     name            VARCHAR(200) NOT NULL,
     url             VARCHAR(500) NOT NULL,
     type            VARCHAR(50)  NOT NULL,
@@ -12,6 +13,27 @@ CREATE TABLE IF NOT EXISTS sources (
     status          VARCHAR(20)  NOT NULL DEFAULT 'active'
 );
 
+INSERT INTO sources (code, name, url, type, adapter_type, config, is_active, status)
+VALUES
+    ('yozm', '요즘IT', 'https://yozm.wishket.com/magazine/itservice/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('kakao-tech', '카카오 기술 블로그', 'https://tech.kakao.com/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('woowahan', '우아한형제들 기술 블로그', 'https://techblog.woowahan.com/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('toss-tech', '토스 기술 블로그', 'https://toss.tech/rss.xml', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('line-engineering', 'LINE Engineering', 'https://engineering.linecorp.com/ko/feed', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('naver-d2', 'NAVER D2', 'https://d2.naver.com/d2.atom', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('kakaopay-tech', '카카오페이 기술 블로그', 'https://tech.kakaopay.com/rss.xml', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('socar-tech', '쏘카 기술 블로그', 'https://tech.socarcorp.kr/feed', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('banksalad-tech', '뱅크샐러드 기술 블로그', 'https://blog.banksalad.com/rss.xml', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('nhn-meetup', 'NHN Cloud Meetup', 'https://meetup.nhncloud.com/rss', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('geeknews', 'GeekNews', 'https://news.hada.io/rss/news', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('aws-blog', 'AWS Blog', 'https://aws.amazon.com/blogs/aws/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('spring-blog', 'Spring Blog', 'https://spring.io/blog.atom', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('thenewstack', 'The New Stack', 'https://thenewstack.io/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('infoq', 'InfoQ', 'https://feed.infoq.com/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('hackernews', 'Hacker News', 'https://hacker-news.firebaseio.com/v0', 'api', 'hn_api', '{"limit": 30}'::jsonb, TRUE, 'active'),
+    ('devto', 'Dev.to', 'https://dev.to/api/articles', 'api', 'devto_api', '{"limit": 30}'::jsonb, TRUE, 'active')
+ON CONFLICT (code) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS articles (
     id           BIGSERIAL     PRIMARY KEY,
     title        VARCHAR(500)  NOT NULL,
@@ -22,7 +44,7 @@ CREATE TABLE IF NOT EXISTS articles (
     created_at   TIMESTAMP     NOT NULL DEFAULT NOW(),
     tagged_at    TIMESTAMP,
     summary      TEXT,
-    source_id    BIGINT        REFERENCES sources(id)
+    source_id    BIGINT        NOT NULL REFERENCES sources(id)
 );
 
 CREATE TABLE IF NOT EXISTS tags (

@@ -6,6 +6,8 @@ export interface Article {
   author: string | null
   publishedAt: string | null
   createdAt: string
+  sourceCode: string
+  sourceName: string
   tags: string[]
 }
 

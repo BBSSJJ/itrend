@@ -14,8 +14,13 @@ const BaseAdapter = require('./base')
 const HN_API = 'https://hacker-news.firebaseio.com/v0'
 
 class HackerNewsAdapter extends BaseAdapter {
+  constructor(source, state = {}, httpClient = axios) {
+    super(source, state)
+    this.httpClient = httpClient
+  }
+
   async fetch() {
-    const { data: ids } = await axios.get(`${HN_API}/topstories.json`)
+    const { data: ids } = await this.httpClient.get(`${HN_API}/topstories.json`)
     // { data: ids } 는 구조 분해 할당. axios 응답에서 data 필드만 꺼내 ids로 명명
     // Java로 치면: List<Long> ids = response.getData();
 
@@ -30,7 +35,7 @@ class HackerNewsAdapter extends BaseAdapter {
     // 순차 실행보다 훨씬 빠름
     const items = await Promise.all(
       newIds.map(id =>
-        axios.get(`${HN_API}/item/${id}.json`)
+        this.httpClient.get(`${HN_API}/item/${id}.json`)
           .then(r => r.data)
           .catch(() => null)  // 개별 요청 실패 시 null 반환 (전체 중단 방지)
       )
@@ -48,7 +53,7 @@ class HackerNewsAdapter extends BaseAdapter {
       description: null,  // HN API는 본문 요약을 제공하지 않음
       author: item.by || null,
       publishedAt: new Date(item.time * 1000),  // HN은 Unix timestamp(초) 사용. JS Date는 밀리초 기준이라 *1000
-      sourceId: this.source.id,
+      sourceCode: this.source.id,
       _hnId: item.id,  // _ prefix: 내부용 필드 (Spring Boot로 전송 시 제외해야 함)
     }
   }

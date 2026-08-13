@@ -10,8 +10,13 @@ const axios = require('axios')
 const BaseAdapter = require('./base')
 
 class DevToAdapter extends BaseAdapter {
+  constructor(source, state = {}, httpClient = axios) {
+    super(source, state)
+    this.httpClient = httpClient
+  }
+
   async fetch() {
-    const { data } = await axios.get('https://dev.to/api/articles', {
+    const { data } = await this.httpClient.get('https://dev.to/api/articles', {
       params: {
         per_page: this.source.config?.limit || 30,  // 한 번에 가져올 수
         tag: this.source.config?.tag || null,        // 특정 태그만 필터링 (없으면 전체)
@@ -34,7 +39,7 @@ class DevToAdapter extends BaseAdapter {
       description: item.description || null,
       author: item.user?.name || null,  // user 객체 안에 name이 있음. user가 null이면 undefined 대신 null
       publishedAt: new Date(item.published_at),
-      sourceId: this.source.id,
+      sourceCode: this.source.id,
     }
   }
 }
