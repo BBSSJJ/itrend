@@ -10,6 +10,7 @@ required_files=(
   "docs/PRODUCT.md"
   "docs/ARCHITECTURE.md"
   "docs/QUALITY.md"
+  "docs/WORKFLOW.md"
   "docs/plans/README.md"
   "docs/plans/tech-debt.md"
 )
