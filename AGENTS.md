@@ -8,6 +8,7 @@ summaries, and presents them in a searchable web interface.
 - Product intent and scope: `docs/PRODUCT.md`
 - Runtime components and data flow: `docs/ARCHITECTURE.md`
 - Current verification status and known gaps: `docs/QUALITY.md`
+- Git branches, commits, and pull requests: `docs/WORKFLOW.md`
 - Planned work and technical debt: `docs/plans/README.md`
 
 Treat repository code and these documents as the source of truth. When they
@@ -42,36 +43,11 @@ Component development commands are documented in the root `README.md`.
 
 ## Git workflow
 
-- Do not commit or push unless the user explicitly requests it.
-- Keep `main` in a working, releasable state. Develop each coherent feature,
-  fix, test improvement, documentation change, or maintenance task on one
-  short-lived branch.
-- Name task branches with `feat/`, `fix/`, `test/`, `docs/`, or `chore/`.
-- Continue small follow-up changes for the same task on its existing branch;
-  do not create a branch for every conversation turn.
-- Before creating or switching branches, inspect `git status` and preserve
-  unrelated user changes.
-- Before committing, run `./scripts/check` and inspect `git status` and
-  `git diff` for unintended changes, secrets, and generated files.
-- Never commit secrets, local environment files, or generated runtime data.
-- Do not force-push, rewrite history, or delete branches unless the user
-  explicitly requests the exact operation.
-- Do not merge into `main` or push directly to `main` unless the user
-  explicitly requests it.
-
-## Naming conventions
-
-- Write commit messages as `<type>(<scope>): <Korean summary>` using
-  Conventional Commits. Omit the scope when it adds no useful context.
-- Use one of these commit types: `feat`, `fix`, `test`, `refactor`, `docs`,
-  `chore`, `ci`, `build`, or `perf`.
-- Prefer these scopes: `collector`, `server`, `frontend`, `db`, `docs`, or
-  `ci`.
-- Keep each commit focused on one logical change. Do not use vague summaries
-  such as `update`, `수정`, or `작업 완료`, and do not end the subject with a
-  period.
-- Name branches as `<type>/<english-kebab-case-topic>`. Use lowercase English
-  words and hyphens; do not use spaces or Korean characters.
+- Before editing, ensure the current branch matches the task and keep one
+  branch focused on one coherent outcome.
+- Do not commit, push, merge, rewrite history, or delete branches unless the
+  user explicitly requests the relevant operation.
+- Follow `docs/WORKFLOW.md` for branch, commit, push, and pull request rules.
 
 ## Definition of done
 
