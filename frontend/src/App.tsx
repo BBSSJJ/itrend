@@ -10,7 +10,7 @@ export default function App() {
   const [page, setPage] = useState(0)
   const [data, setData] = useState<Page<Article> | null>(null)
   const [popularTags, setPopularTags] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -18,17 +18,36 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    setLoading(true)
-    setError(null)
+    let cancelled = false
+
     fetchArticles(page, tag)
-      .then(setData)
-      .catch(() => setError('기사를 불러오지 못했습니다.'))
-      .finally(() => setLoading(false))
+      .then((nextData) => {
+        if (!cancelled) setData(nextData)
+      })
+      .catch(() => {
+        if (!cancelled) setError('기사를 불러오지 못했습니다.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [page, tag])
 
   function handleTagChange(t: string | null) {
+    if (t === tag) return
+    setLoading(true)
+    setError(null)
     setTag(t)
     setPage(0)
+  }
+
+  function handlePageChange(nextPage: number) {
+    setLoading(true)
+    setError(null)
+    setPage(nextPage)
   }
 
   return (
@@ -55,11 +74,11 @@ export default function App() {
 
             {data.totalPages > 1 && (
               <div className="pagination">
-                <button disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                <button disabled={page === 0} onClick={() => handlePageChange(page - 1)}>
                   이전
                 </button>
                 <span>{page + 1} / {data.totalPages}</span>
-                <button disabled={data.last} onClick={() => setPage((p) => p + 1)}>
+                <button disabled={data.last} onClick={() => handlePageChange(page + 1)}>
                   다음
                 </button>
               </div>
