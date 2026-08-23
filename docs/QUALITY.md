@@ -1,6 +1,6 @@
 # Quality baseline
 
-마지막 점검: 2026-08-13
+마지막 점검: 2026-08-23
 
 ## 자동 검증
 
@@ -19,12 +19,26 @@ GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 �
 
 ## 확인된 기준선
 
-- `scripts/check` 전체 검증은 2026-08-13에 로컬 통과했다.
+- `scripts/check` 전체 검증은 2026-08-23에 로컬 통과했다.
 - 서버 JUnit 테스트는 PostgreSQL 16 컨테이너를 사용해 통과했다.
 - 프런트엔드 ESLint, TypeScript 검사와 프로덕션 빌드가 통과했다.
-- Collector의 JavaScript 구문 검사와 7개 동작 테스트가 통과했다.
-- 서버는 출처 저장·조회와 미등록 출처 거부를 통합 테스트한다.
+- Collector의 JavaScript 구문 검사와 15개 동작 테스트가 통과했다.
+- Collector는 폐쇄형 strict schema, canonical 정규화와 키워드 대체 처리 메타데이터를 테스트한다.
+- Collector는 태깅 전용 입력의 HTML·Markdown·URL·공백 정제, 길이 제한,
+  원본 불변성과 키워드 오탐 방지를 테스트한다.
+- 서버는 출처 계약과 태깅 작업의 선점·완료·실패·canonical 태그 거부를 통합 테스트한다.
 - 엔드투엔드 수집 및 태깅 테스트가 없다.
+
+## 수동 검증
+
+- 2026-08-23에 실제 Groq와 로컬 서버를 연결하여 기존 빈 태그 기사 29개를 새
+  전처리 입력으로 재태깅했다.
+- 29개 모두 `COMPLETED / AI`로 저장됐고 오류나 키워드 폴백은 없었다.
+- 기존 0개에서 13개 기사에 총 21개 태그가 생성됐으며 16개는 여전히 빈
+  태그였다.
+- `go`, `testing`, `claude`, `hadoop`, `kubernetes` 등은 복구됐지만 본문에
+  명시된 `kafka`를 AI가 놓치는 사례가 남아 있어 고정밀 별칭 선태깅과 AI 결과
+  병합이 필요하다.
 
 ## 품질 원칙
 
