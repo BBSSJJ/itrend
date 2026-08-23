@@ -2,10 +2,12 @@ package com.itrend.server.service;
 
 import com.itrend.server.domain.Article;
 import com.itrend.server.domain.Tag;
+import com.itrend.server.domain.TaggingMethod;
+import com.itrend.server.domain.TaggingStatus;
 import com.itrend.server.dto.ArticleResponse;
 import com.itrend.server.dto.ArticleSaveRequest;
 import com.itrend.server.dto.ArticleTagUpdateRequest;
-import com.itrend.server.dto.ArticleUntaggedResponse;
+import com.itrend.server.dto.ArticleTaggingTaskResponse;
 import com.itrend.server.repository.ArticleRepository;
 import com.itrend.server.repository.SourceRepository;
 import com.itrend.server.repository.TagRepository;
@@ -33,6 +35,7 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final SourceRepository sourceRepository;
     private final TagRepository tagRepository;
+    private final CanonicalTagPolicy canonicalTagPolicy;
 
     @Transactional
     public int saveAll(List<ArticleSaveRequest> requests) {
@@ -58,11 +61,8 @@ public class ArticleService {
             Article savedArticle = articleRepository.save(article);
 
             if (req.getTags() != null) {
-                for (String tagName : req.getTags()) {
-                    Tag tag = tagRepository.findByName(tagName)
-                            .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
-                    savedArticle.addTag(tag);
-                }
+                Set<Tag> tags = resolveTags(req.getTags());
+                savedArticle.completeTagging(tags, TaggingMethod.PROVIDED, null);
             }
 
             saved++;
@@ -84,11 +84,15 @@ public class ArticleService {
         return tagRepository.findPopularTags(limit);
     }
 
-    @Transactional(readOnly = true)
-    public List<ArticleUntaggedResponse> getUntaggedArticles(int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
-        return articleRepository.findByTaggedAtIsNullOrderByIdAsc(pageable)
-                .stream().map(ArticleUntaggedResponse::from).toList();
+    @Transactional
+    public List<ArticleTaggingTaskResponse> claimTaggingTasks(int limit) {
+        if (limit < 1 || limit > 100) {
+            throw new ResponseStatusException(BAD_REQUEST, "Tagging limit must be between 1 and 100");
+        }
+
+        List<Article> articles = articleRepository.findTaggingCandidatesForUpdate(limit);
+        articles.forEach(Article::claimTagging);
+        return articles.stream().map(ArticleTaggingTaskResponse::from).toList();
     }
 
     @Transactional
@@ -96,20 +100,41 @@ public class ArticleService {
         int updated = 0;
         for (ArticleTagUpdateRequest req : requests) {
             Article article = articleRepository.findById(req.getId()).orElse(null);
-            if (article == null) continue;
-
-            Set<Tag> tags = new HashSet<>();
-            if (req.getTags() != null) {
-                for (String tagName : req.getTags()) {
-                    Tag tag = tagRepository.findByName(tagName)
-                            .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
-                    tags.add(tag);
-                }
+            if (article == null || article.getTaggingStatus() != TaggingStatus.PROCESSING) continue;
+            if (req.getMethod() == null) {
+                throw new ResponseStatusException(BAD_REQUEST, "Tagging method is required");
             }
-            article.updateTags(tags);
+
+            Set<Tag> tags = resolveTags(req.getTags());
+            article.completeTagging(tags, req.getMethod(), req.getError());
             updated++;
         }
         return updated;
+    }
+
+    @Transactional
+    public int failTaggingBatch(List<Long> ids, String error) {
+        if (ids == null) return 0;
+
+        int failed = 0;
+        for (Long id : ids) {
+            Article article = articleRepository.findById(id).orElse(null);
+            if (article == null || article.getTaggingStatus() != TaggingStatus.PROCESSING) continue;
+            article.failTagging(error);
+            failed++;
+        }
+        return failed;
+    }
+
+    private Set<Tag> resolveTags(List<String> tagNames) {
+        Set<String> validatedNames = canonicalTagPolicy.validate(tagNames);
+        Set<Tag> tags = new HashSet<>();
+        for (String tagName : validatedNames) {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
+            tags.add(tag);
+        }
+        return tags;
     }
 
     private LocalDateTime parsePublishedAt(String publishedAt) {

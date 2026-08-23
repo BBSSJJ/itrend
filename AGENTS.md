@@ -19,6 +19,7 @@ disagree, verify the behavior and update the stale document in the same change.
 - `collector/`: Node.js source adapters, collection jobs, and AI tagging
 - `server/`: Java 21 / Spring Boot API and PostgreSQL persistence
 - `frontend/`: React / TypeScript / Vite web UI
+- `config/`: Collector와 Server가 공유하는 버전 관리 설정
 - `docker-compose.yml`: local PostgreSQL
 - `scripts/`: repository-wide setup and verification commands
 

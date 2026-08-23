@@ -7,6 +7,7 @@ required_files=(
   "AGENTS.md"
   "README.md"
   "collector/.env.example"
+  "config/canonical-tags.json"
   "docs/PRODUCT.md"
   "docs/ARCHITECTURE.md"
   "docs/QUALITY.md"
@@ -33,6 +34,9 @@ npm --prefix "$repo_root/collector" test
 
 echo "[check] PostgreSQL 준비"
 docker compose --project-directory "$repo_root" up -d --wait postgres
+docker compose --project-directory "$repo_root" exec -T postgres \
+  psql --set ON_ERROR_STOP=1 -U itrend -d itrend \
+  -f /docker-entrypoint-initdb.d/01_schema.sql >/dev/null
 
 echo "[check] Server 테스트"
 (

@@ -40,6 +40,23 @@ public class Article {
     @Column(name = "tagged_at")
     private LocalDateTime taggedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tagging_status", nullable = false)
+    private TaggingStatus taggingStatus = TaggingStatus.PENDING;
+
+    @Column(name = "tagging_attempts", nullable = false)
+    private int taggingAttempts;
+
+    @Column(name = "tagging_started_at")
+    private LocalDateTime taggingStartedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tagging_method")
+    private TaggingMethod taggingMethod;
+
+    @Column(name = "tagging_error", columnDefinition = "text")
+    private String taggingError;
+
     @Column(columnDefinition = "text")
     private String summary;
 
@@ -58,6 +75,7 @@ public class Article {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.taggingStatus == null) this.taggingStatus = TaggingStatus.PENDING;
     }
 
     @Builder
@@ -76,9 +94,26 @@ public class Article {
         this.tags.add(tag);
     }
 
-    public void updateTags(Set<Tag> newTags) {
+    public void claimTagging() {
+        this.taggingStatus = TaggingStatus.PROCESSING;
+        this.taggingStartedAt = LocalDateTime.now();
+        this.taggingAttempts++;
+        this.taggingError = null;
+    }
+
+    public void completeTagging(Set<Tag> newTags, TaggingMethod method, String error) {
         this.tags.clear();
         this.tags.addAll(newTags);
+        this.taggingStatus = TaggingStatus.COMPLETED;
+        this.taggingMethod = method;
+        this.taggingError = error;
         this.taggedAt = LocalDateTime.now();
+    }
+
+    public void failTagging(String error) {
+        this.taggingStatus = TaggingStatus.FAILED;
+        this.taggingMethod = null;
+        this.taggingError = error;
+        this.taggedAt = null;
     }
 }

@@ -6,14 +6,14 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ArticleUntaggedResponse {
+public class ArticleTaggingTaskResponse {
 
     private Long id;
     private String title;
     private String description;
 
-    public static ArticleUntaggedResponse from(Article article) {
-        return ArticleUntaggedResponse.builder()
+    public static ArticleTaggingTaskResponse from(Article article) {
+        return ArticleTaggingTaskResponse.builder()
                 .id(article.getId())
                 .title(article.getTitle())
                 .description(article.getDescription())
