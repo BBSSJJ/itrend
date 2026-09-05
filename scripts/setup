@@ -18,6 +18,9 @@ npm --prefix "$repo_root/frontend" ci
 
 echo "[setup] PostgreSQL 시작"
 docker compose --project-directory "$repo_root" up -d --wait postgres
+docker compose --project-directory "$repo_root" exec -T postgres \
+  psql --set ON_ERROR_STOP=1 -U itrend -d itrend \
+  -f /docker-entrypoint-initdb.d/01_schema.sql >/dev/null
 
 echo "[setup] Server 빌드 준비"
 (

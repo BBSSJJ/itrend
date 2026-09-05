@@ -9,7 +9,7 @@ RSS / Hacker News / Dev.to
   Node.js collector :3001
        | collect          | tag
        v                  v
- POST /api/articles/batch  GET/PATCH untagged articles
+ POST /api/articles/batch  claim/complete/fail tagging jobs
             \            /
              Spring Boot :8080
                     |
@@ -29,10 +29,22 @@ RSS / Hacker News / Dev.to
 마지막 수집 상태는 개발 환경의 `collector/state.json`에 저장되며 Git에서
 제외된다.
 
-태깅은 수집과 분리되어 있다. `collector/src/tagger-job.js`가 서버에서
-`tagged_at`이 없는 기사를 조회하고 Groq 또는 키워드 태거를 실행한 뒤 결과를
-서버에 다시 보낸다. `collector/index.js`는 `/collect`와 `/tag` 제어 API를
-제공한다.
+태깅은 수집과 분리되어 있다. `collector/src/tagger-job.js`가 서버에서 대기 또는
+재시도 가능한 기사를 선점하고 Groq 또는 키워드 태거를 실행한 뒤 완료나 실패를
+서버에 보고한다. Groq 태거는 `openai/gpt-oss-20b`의 strict JSON Schema를
+사용하며 폐쇄형 canonical 태그만 반환한다. Collector와 Server가 기사당 태그를
+0~5개로 제한한다. AI 키가 없거나 호출이 실패하면 키워드 태거를 사용하고 그 처리
+방법과 원인을 함께 기록한다.
+태깅 직전에는 원본 `description`을 변경하지 않고 HTML, Markdown 이미지, URL,
+제어 문자와 반복 공백을 제거한 전용 입력을 만든다. 정제된 제목은 최대 200자,
+설명은 최대 600자로 제한하며 Groq와 키워드 태거가 같은 입력을 사용한다. Groq
+요청 청크 크기와 간격은 `TAGGER_CHUNK_SIZE`, `TAGGER_CHUNK_DELAY_MS`로 조정할
+수 있다.
+`collector/index.js`는 `/collect`와 `/tag` 제어 API를 제공한다.
+
+Canonical 태그 목록의 단일 원본은 `config/canonical-tags.json`이다. Collector는
+이 파일을 직접 읽고 Server 빌드는 같은 파일을 classpath resource로 복사하여 태그
+저장 전에 다시 검증한다.
 
 ### Server
 
@@ -42,13 +54,21 @@ Spring Boot API가 기사, 태그, 출처 엔티티를 PostgreSQL에 저장한�
 서버는 `sourceCode`로 등록된 출처를 찾아 기사와 연결하며 알 수 없는 코드는
 거부한다. 기사 응답은 `sourceCode`와 `sourceName`을 포함한다.
 
+태깅 상태는 `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`로 관리한다. 작업
+선점은 PostgreSQL의 `FOR UPDATE SKIP LOCKED`를 사용하여 여러 Worker가 같은
+기사를 처리하지 않게 한다. 실패 작업은 다음 실행에서 최대 3회까지 재시도하며,
+15분 넘게 `PROCESSING`인 작업은 중단된 것으로 보고 다시 선점할 수 있다.
+
 주요 API:
 
 - `POST /api/articles/batch`: 수집 기사 저장
 - `GET /api/articles`: 최신 기사 페이지 조회 및 태그 필터
 - `GET /api/tags/popular`: 사용 빈도 기준 인기 태그
-- `GET /api/articles/untagged`: 태깅 대기 기사 조회
-- `PATCH /api/articles/tags/batch`: 태그 결과 저장
+- `POST /api/articles/tagging/claim`: 태깅 작업 선점
+- `PATCH /api/articles/tagging/complete`: 태그와 처리 메타데이터 저장
+- `PATCH /api/articles/tagging/fail`: 태깅 실패 기록
+
+Collector의 쓰기와 태깅 작업 API는 모두 `X-API-Key`로 보호된다.
 
 ### Frontend
 
@@ -59,12 +79,13 @@ React 애플리케이션이 기사와 인기 태그 API를 호출한다. 로컬 
 ## 데이터 모델
 
 - `sources`: 숫자 PK와 외부 계약용 고유 `code`를 가진 수집 출처 및 상태
-- `articles`: 원문 메타데이터, 태깅 시각, 향후 요약
+- `articles`: 원문 메타데이터, 태깅 상태·시도·방법·시각·오류, 향후 요약
 - `tags`: 정규화된 태그 이름
 - `article_tags`: 기사와 태그의 다대다 관계
 
 기사 URL과 태그 이름은 각각 유일해야 한다. 데이터베이스 정의의 원본은
-`server/src/main/resources/db/schema.sql`이다.
+`server/src/main/resources/db/schema.sql`이다. `scripts/setup`과 `scripts/check`는
+새 DB뿐 아니라 기존 로컬 볼륨에도 이 스키마의 멱등 변경을 적용한다.
 
 ## 환경 분리
 
@@ -75,12 +96,7 @@ React 애플리케이션이 기사와 인기 태그 API를 호출한다. 로컬 
 
 배포 대상이 결정되기 전에는 플랫폼별 설정을 추가하지 않는다.
 
-## 현재 확인된 불일치
+## 미구현 경계
 
-아래 항목은 현재 구조를 설명하기 위한 기록이며 이 문서 작성 시 수정하지 않았다.
-
-- `scheduler.js`의 cron 등록은 현재 `index.js`에서 로드되지 않는다.
-- `summary` 컬럼은 존재하지만 생성·조회·표시 흐름은 아직 없다.
-- Collector 제어 API 자체에는 인증이 없다.
-
-구체적인 후속 작업은 `docs/plans/tech-debt.md`에서 관리한다.
+자동 수집 스케줄, 요약 생성 흐름, Collector 제어 API 보호 등 현재 구현되지 않은
+작업의 우선순위와 완료 상태는 `docs/plans/tech-debt.md`에서만 관리한다.

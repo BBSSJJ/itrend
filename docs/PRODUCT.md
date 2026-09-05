@@ -23,7 +23,7 @@ ITrend는 여러 출처에 흩어진 IT 이슈와 기술 콘텐츠를 한곳에 
 
 - RSS, Hacker News, Dev.to 수집
 - URL 기준 중복 방지
-- Groq LLM 태깅과 키워드 기반 대체 처리
+- 폐쇄형 canonical 목록을 사용하는 Groq LLM 태깅과 키워드 기반 대체 처리
 - 출처가 표시된 기사 목록 조회, 태그 필터, 페이지네이션
 - 로컬 PostgreSQL 기반 개발
 

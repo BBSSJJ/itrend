@@ -19,6 +19,7 @@ disagree, verify the behavior and update the stale document in the same change.
 - `collector/`: Node.js source adapters, collection jobs, and AI tagging
 - `server/`: Java 21 / Spring Boot API and PostgreSQL persistence
 - `frontend/`: React / TypeScript / Vite web UI
+- `config/`: Collector와 Server가 공유하는 버전 관리 설정
 - `docker-compose.yml`: local PostgreSQL
 - `scripts/`: repository-wide setup and verification commands
 
@@ -31,6 +32,8 @@ disagree, verify the behavior and update the stale document in the same change.
 5. Prefer executable checks over prose-only rules.
 6. Add or update tests for behavior changes when a test layer exists.
 7. Record meaningful follow-up work in `docs/plans/tech-debt.md`.
+8. Treat documentation as current truth, not an append-only changelog: replace
+   stale status, remove resolved debt, and use Git or pull requests for history.
 
 ## Commands
 

@@ -1,4 +1,5 @@
 const { CANONICAL_TAGS } = require('../config/keywords')
+const { prepareTaggingInput } = require('./taggingText')
 
 function matchKeyword(text, kw) {
   const pattern = kw
@@ -9,7 +10,8 @@ function matchKeyword(text, kw) {
 }
 
 function tag(article) {
-  const text = `${article.title ?? ''} ${article.description ?? ''}`.toLowerCase()
+  const input = prepareTaggingInput(article)
+  const text = `${input.title} ${input.description}`.toLowerCase()
   const tags = CANONICAL_TAGS.filter(kw => matchKeyword(text, kw))
   return { ...article, tags }
 }

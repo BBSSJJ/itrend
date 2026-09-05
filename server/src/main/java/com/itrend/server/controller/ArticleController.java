@@ -3,7 +3,8 @@ package com.itrend.server.controller;
 import com.itrend.server.dto.ArticleResponse;
 import com.itrend.server.dto.ArticleSaveRequest;
 import com.itrend.server.dto.ArticleTagUpdateRequest;
-import com.itrend.server.dto.ArticleUntaggedResponse;
+import com.itrend.server.dto.ArticleTaggingFailureRequest;
+import com.itrend.server.dto.ArticleTaggingTaskResponse;
 import com.itrend.server.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,14 +55,18 @@ public class ArticleController {
         return articleService.getPopularTags(limit);
     }
 
-    @GetMapping("/api/articles/untagged")
-    public List<ArticleUntaggedResponse> getUntaggedArticles(
+    @PostMapping("/api/articles/tagging/claim")
+    public ResponseEntity<List<ArticleTaggingTaskResponse>> claimTaggingTasks(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
             @RequestParam(defaultValue = "50") int limit) {
 
-        return articleService.getUntaggedArticles(limit);
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(articleService.claimTaggingTasks(limit));
     }
 
-    @PatchMapping("/api/articles/tags/batch")
+    @PatchMapping("/api/articles/tagging/complete")
     public ResponseEntity<Map<String, Integer>> updateTagsBatch(
             @RequestHeader(value = "X-API-Key", required = false) String apiKey,
             @RequestBody List<ArticleTagUpdateRequest> requests) {
@@ -72,5 +77,18 @@ public class ArticleController {
 
         int updated = articleService.updateTagsBatch(requests);
         return ResponseEntity.ok(Map.of("updated", updated));
+    }
+
+    @PatchMapping("/api/articles/tagging/fail")
+    public ResponseEntity<Map<String, Integer>> failTaggingBatch(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody ArticleTaggingFailureRequest request) {
+
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        int failed = articleService.failTaggingBatch(request.getIds(), request.getError());
+        return ResponseEntity.ok(Map.of("failed", failed));
     }
 }

@@ -42,10 +42,26 @@ CREATE TABLE IF NOT EXISTS articles (
     author       VARCHAR(200),
     published_at TIMESTAMP,
     created_at   TIMESTAMP     NOT NULL DEFAULT NOW(),
+    tagging_status VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    tagging_attempts INT        NOT NULL DEFAULT 0,
+    tagging_started_at TIMESTAMP,
+    tagging_method VARCHAR(30),
+    tagging_error TEXT,
     tagged_at    TIMESTAMP,
     summary      TEXT,
     source_id    BIGINT        NOT NULL REFERENCES sources(id)
 );
+
+-- 기존 로컬 볼륨에도 태깅 상태 컬럼을 안전하게 추가한다.
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_status VARCHAR(20) NOT NULL DEFAULT 'PENDING';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_attempts INT NOT NULL DEFAULT 0;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_started_at TIMESTAMP;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_method VARCHAR(30);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_error TEXT;
+
+UPDATE articles
+SET tagging_status = 'COMPLETED'
+WHERE tagged_at IS NOT NULL AND tagging_status = 'PENDING';
 
 CREATE TABLE IF NOT EXISTS tags (
     id   BIGSERIAL    PRIMARY KEY,
@@ -61,4 +77,6 @@ CREATE TABLE IF NOT EXISTS article_tags (
 -- 자주 쓰는 쿼리 최적화용 인덱스
 CREATE INDEX IF NOT EXISTS idx_articles_source_id    ON articles(source_id);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_tagging_queue
+    ON articles(tagging_status, tagging_started_at, id);
 CREATE INDEX IF NOT EXISTS idx_tags_name             ON tags(name);
