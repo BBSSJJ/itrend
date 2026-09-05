@@ -1,73 +1,39 @@
-# React + TypeScript + Vite
+# ITrend Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+수집된 IT 기사를 탐색하는 React, TypeScript, Vite 애플리케이션이다. 기사 목록과
+출처를 표시하고, 인기 태그 필터와 페이지네이션을 제공한다.
 
-Currently, two official plugins are available:
+## 실행
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+루트에서 `./scripts/setup`을 실행한 뒤 개발 서버를 시작한다.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm --prefix frontend run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+기본 주소는 `http://localhost:5173`이다. 개발 서버는 `/api` 요청을
+`http://localhost:8080`의 Spring Boot 서버로 프록시하므로 API 서버도 실행되어
+있어야 한다.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 검증
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm --prefix frontend run lint
+npm --prefix frontend run build
 ```
+
+저장소 전체 검증에는 루트의 `./scripts/check`를 사용한다.
+
+## 주요 구조
+
+```text
+src/
+├── api/articles.ts          기사와 인기 태그 API 호출
+├── components/              기사 카드와 태그 필터
+├── types/article.ts         API 응답 타입
+└── App.tsx                  로딩·오류·목록·페이지 상태 관리
+```
+
+프로덕션 API 라우팅과 배포 방식은 아직 정하지 않았다. 현재 경계와 후속 작업은
+[`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)와
+[`docs/plans/tech-debt.md`](../docs/plans/tech-debt.md)를 참고한다.

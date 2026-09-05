@@ -1,137 +1,82 @@
 # ITrend Collector
 
-IT 뉴스, 기술 블로그, 인사이트를 자동으로 수집하는 Node.js 수집기.
-하루 2회(08:00, 18:00 KST) 실행되며, 수집된 데이터는 Spring Boot API로 전송된다.
+외부 RSS와 공개 API에서 기사를 수집하고, 서버에 저장된 태깅 작업을 처리하는
+Node.js 애플리케이션이다. 수집과 태깅은 서로 독립적으로 실행한다.
 
----
+## 역할과 데이터 흐름
 
-## 프로젝트 구조
+### 기사 수집
 
-```
+1. `src/config/sources.js`에서 활성 소스를 읽는다.
+2. RSS, Hacker News 또는 Dev.to 어댑터가 새 기사를 공통 형태로 정규화한다.
+3. `POST /api/articles/batch`로 원본 메타데이터를 서버에 저장한다.
+4. 전송이 성공하면 `state.json`의 소스별 수집 시점을 갱신한다.
+
+### 기사 태깅
+
+1. 서버의 `POST /api/articles/tagging/claim`에서 처리할 기사를 선점한다.
+2. 제목과 설명을 코드로 정제한 뒤 Groq 또는 키워드 태거로 분석한다.
+3. 저장소의 `config/canonical-tags.json`에 있는 태그만 0~5개 선택한다.
+4. 완료 또는 실패 결과와 처리 메타데이터를 서버에 보고한다.
+
+원본 `description`은 태깅 입력을 만들 때 변경하지 않는다. Groq 키가 없거나
+호출이 실패하면 키워드 태거를 사용한다. 자세한 서버 계약과 재시도 정책은
+[`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)를 참고한다.
+
+## 주요 구조
+
+```text
 collector/
-│
-├── index.js                  진입점. node index.js로 실행
-├── state.json                자동 생성. 소스별 마지막 수집 시점 저장
-├── .env                      환경변수 (git 미포함, .env.example 참고)
-│
-└── src/
-    ├── collector.js          핵심 로직. 소스 순회 → 수집 → 태깅 → 전송
-    ├── scheduler.js          cron 등록. 정해진 시간에 collector 실행
-    │
-    ├── adapters/             소스별 데이터 수집 담당
-    │   ├── base.js           추상 클래스 (fetch, normalize 인터페이스 정의)
-    │   ├── rss.js            RSS 피드 파싱 (요즘IT, 카카오, 토스 등 공통)
-    │   ├── hackernews.js     HN API (ID 기반 중복 방지)
-    │   ├── devto.js          Dev.to API
-    │   └── crawlers/         향후 크롤링 필요한 사이트용
-    │
-    ├── config/               설정 파일
-    │   ├── sources.js        수집 소스 목록 (URL, 어댑터 종류, 활성화 여부)
-    │   └── categories.js     카테고리별 키워드 매핑 (자동 태깅 기준)
-    │
-    └── services/
-        ├── state.js          state.json 읽기/쓰기 (중복 수집 방지)
-        ├── tagger.js         제목/설명 분석 → 태그 + 카테고리 자동 부여
-        └── sender.js         Spring Boot API로 전송
+├── index.js                  /collect, /tag 제어 API
+├── src/
+│   ├── collector.js          소스 순회와 기사 전송
+│   ├── tagger-job.js         태깅 작업 선점·완료·실패 보고
+│   ├── adapters/             RSS 및 공개 API 어댑터
+│   ├── config/
+│   │   ├── sources.js        수집 소스와 활성 상태
+│   │   └── keywords.js       canonical 태그와 별칭 연결
+│   └── services/             전송, 상태, 태깅, 입력 정제
+├── test/                     Node 내장 테스트
+└── state.json                로컬 수집 상태(자동 생성, Git 제외)
 ```
 
----
-
-## 데이터 흐름
-
-```
-index.js
-  └→ collector.js
-       └→ 소스마다:
-            1. state.json에서 마지막 수집 시점 읽기
-            2. Adapter 생성 (rss / hn_api / devto_api)
-            3. adapter.fetch() → 새 아티클만 가져옴
-            4. tagger.js → 태그 + 카테고리 자동 부여
-            5. sender.js → Spring Boot로 전송
-            6. state.json 업데이트
-```
-
----
+현재 소스 목록과 활성 상태는 중복 문서화하지 않고
+`src/config/sources.js`를 단일 기준으로 삼는다. `src/scheduler.js`는 아직 실행
+진입점에 연결되지 않았으므로 수집과 태깅은 수동으로 시작해야 한다.
 
 ## 실행
 
+루트에서 `./scripts/setup`을 실행한 뒤 환경변수를 준비한다.
+
 ```bash
-# 의존성 설치
-npm install
+cp collector/.env.example collector/.env
 
-# 환경변수 설정
-cp .env.example .env
-# .env 파일에서 BE_API_URL, COLLECTOR_API_KEY 입력
+# 제어 API 실행 (기본 포트 3001)
+npm --prefix collector start
 
-# 개발 모드 실행 (Spring Boot 없이 콘솔 출력만)
-NODE_ENV=dev node index.js
+# API 없이 수집만 1회 실행
+npm --prefix collector run collect
 
-# 프로덕션 실행 (Spring Boot로 실제 전송)
-node index.js
-
-# 스케줄러 없이 즉시 1회만 수집
-node -e "require('./src/collector').collect()"
+# 테스트
+npm --prefix collector test
 ```
 
----
+제어 API가 실행 중이면 다음 요청으로 작업을 시작한다.
 
-## 수집 소스 현황
-
-| 소스 | 종류 | 상태 |
-|------|------|------|
-| 요즘IT | RSS | 활성 |
-| 카카오 기술 블로그 | RSS | 활성 |
-| 토스 기술 블로그 | RSS | 활성 |
-| LINE Engineering | RSS | 활성 |
-| NAVER D2 | RSS | 활성 |
-| AWS Blog | RSS | 활성 |
-| Spring Blog | RSS | 활성 |
-| The New Stack | RSS | 활성 |
-| InfoQ | RSS | 활성 |
-| Hacker News | API | 활성 |
-| Dev.to | API | 활성 |
-| 우아한형제들 기술 블로그 | RSS | 비활성 (Cloudflare 차단) |
-
----
-
-## 소스 추가하는 법
-
-### RSS 소스 추가 (코드 변경 없음)
-
-`src/config/sources.js`에 항목만 추가하면 된다.
-
-```js
-{
-  id: 'new-source',           // 고유 ID (state.json 키로 사용됨)
-  name: '새 소스 이름',
-  url: 'https://example.com/feed/',
-  adapterType: 'rss',
-  isActive: true,
-  config: {},
-}
+```bash
+curl -X POST http://localhost:3001/collect
+curl -X POST http://localhost:3001/tag
 ```
 
-### 새 API / 크롤러 소스 추가
+`NODE_ENV=dev`이거나 `BE_API_URL`이 비어 있으면 수집 결과를 서버로 보내지 않고
+콘솔에 출력한다. `/collect`와 `/tag` 자체의 인증은 아직 없으므로 외부에 그대로
+노출하지 않는다.
 
-1. `src/adapters/`에 어댑터 파일 생성 (`base.js` 상속, `fetch()`와 `normalize()` 구현)
-2. `src/collector.js`의 `ADAPTERS` 맵에 한 줄 추가
-3. `src/config/sources.js`에 소스 등록
+## 소스 추가
 
-### 카테고리 / 키워드 추가
+RSS 소스는 `src/config/sources.js`에 고유 `id`, 표시 이름, URL,
+`adapterType: 'rss'`, 활성 상태를 추가한다. 새 API 형식은 `src/adapters/`에
+어댑터를 구현하고 `src/collector.js`의 `ADAPTERS`에 연결한 뒤 소스를 등록한다.
 
-`src/config/categories.js`에서 카테고리 항목을 추가하거나 `keywords` 배열에 키워드를 추가한다.
-
-```js
-{
-  name: 'Security',
-  slug: 'security',
-  keywords: ['security', 'vulnerability', 'cve', 'oauth', 'zero trust'],
-}
-```
-
----
-
-## 중복 수집 방지 전략
-
-- **1차 (Node.js)**: `state.json`에 소스별 마지막 수집 시점 저장 → 그 이후 발행된 것만 fetch
-- **2차 (Spring Boot)**: `articles.url` unique 제약으로 중복 insert 차단
+수집 소스 코드는 서버 DB의 출처 코드와 일치해야 한다. URL 중복은 Collector의
+수집 상태와 서버의 `articles.url` 고유 제약으로 이중 방지한다.

@@ -32,6 +32,8 @@ disagree, verify the behavior and update the stale document in the same change.
 5. Prefer executable checks over prose-only rules.
 6. Add or update tests for behavior changes when a test layer exists.
 7. Record meaningful follow-up work in `docs/plans/tech-debt.md`.
+8. Treat documentation as current truth, not an append-only changelog: replace
+   stale status, remove resolved debt, and use Git or pull requests for history.
 
 ## Commands
 
