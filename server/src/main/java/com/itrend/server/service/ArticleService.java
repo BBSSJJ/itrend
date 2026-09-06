@@ -4,8 +4,11 @@ import com.itrend.server.domain.Article;
 import com.itrend.server.domain.Tag;
 import com.itrend.server.domain.TaggingMethod;
 import com.itrend.server.domain.TaggingStatus;
+import com.itrend.server.domain.SummaryStatus;
 import com.itrend.server.dto.ArticleResponse;
 import com.itrend.server.dto.ArticleSaveRequest;
+import com.itrend.server.dto.ArticleSummaryTaskResponse;
+import com.itrend.server.dto.ArticleSummaryUpdateRequest;
 import com.itrend.server.dto.ArticleTagUpdateRequest;
 import com.itrend.server.dto.ArticleTaggingTaskResponse;
 import com.itrend.server.repository.ArticleRepository;
@@ -121,6 +124,53 @@ public class ArticleService {
             Article article = articleRepository.findById(id).orElse(null);
             if (article == null || article.getTaggingStatus() != TaggingStatus.PROCESSING) continue;
             article.failTagging(error);
+            failed++;
+        }
+        return failed;
+    }
+
+    @Transactional
+    public List<ArticleSummaryTaskResponse> claimSummaryTasks(int limit) {
+        if (limit < 1 || limit > 100) {
+            throw new ResponseStatusException(BAD_REQUEST, "Summary limit must be between 1 and 100");
+        }
+
+        List<Article> articles = articleRepository.findSummaryCandidatesForUpdate(limit);
+        articles.forEach(Article::claimSummary);
+        return articles.stream().map(ArticleSummaryTaskResponse::from).toList();
+    }
+
+    @Transactional
+    public int updateSummariesBatch(List<ArticleSummaryUpdateRequest> requests) {
+        int updated = 0;
+        for (ArticleSummaryUpdateRequest req : requests) {
+            Article article = articleRepository.findById(req.getId()).orElse(null);
+            if (article == null || article.getSummaryStatus() != SummaryStatus.PROCESSING) continue;
+
+            String summary = req.getSummary() == null ? "" : req.getSummary().trim();
+            String model = req.getModel() == null ? "" : req.getModel().trim();
+            if (summary.isEmpty() || summary.length() > 500) {
+                throw new ResponseStatusException(BAD_REQUEST, "Summary must be between 1 and 500 characters");
+            }
+            if (model.isEmpty() || model.length() > 100) {
+                throw new ResponseStatusException(BAD_REQUEST, "Summary model is required and must be at most 100 characters");
+            }
+
+            article.completeSummary(summary, model);
+            updated++;
+        }
+        return updated;
+    }
+
+    @Transactional
+    public int failSummaryBatch(List<Long> ids, String error) {
+        if (ids == null) return 0;
+
+        int failed = 0;
+        for (Long id : ids) {
+            Article article = articleRepository.findById(id).orElse(null);
+            if (article == null || article.getSummaryStatus() != SummaryStatus.PROCESSING) continue;
+            article.failSummary(error);
             failed++;
         }
         return failed;

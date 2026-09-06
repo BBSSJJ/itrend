@@ -20,6 +20,7 @@ public class ArticleResponse {
     private LocalDateTime createdAt;
     private String sourceCode;
     private String sourceName;
+    private String summary;
     private List<String> tags;
 
     public static ArticleResponse from(Article article) {
@@ -33,6 +34,7 @@ public class ArticleResponse {
                 .createdAt(article.getCreatedAt())
                 .sourceCode(article.getSource().getCode())
                 .sourceName(article.getSource().getName())
+                .summary(article.getSummary())
                 .tags(article.getTags().stream().map(tag -> tag.getName()).toList())
                 .build();
     }

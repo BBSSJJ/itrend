@@ -5,6 +5,9 @@ import com.itrend.server.dto.ArticleSaveRequest;
 import com.itrend.server.dto.ArticleTagUpdateRequest;
 import com.itrend.server.dto.ArticleTaggingFailureRequest;
 import com.itrend.server.dto.ArticleTaggingTaskResponse;
+import com.itrend.server.dto.ArticleSummaryFailureRequest;
+import com.itrend.server.dto.ArticleSummaryTaskResponse;
+import com.itrend.server.dto.ArticleSummaryUpdateRequest;
 import com.itrend.server.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,6 +92,43 @@ public class ArticleController {
         }
 
         int failed = articleService.failTaggingBatch(request.getIds(), request.getError());
+        return ResponseEntity.ok(Map.of("failed", failed));
+    }
+
+    @PostMapping("/api/articles/summarization/claim")
+    public ResponseEntity<List<ArticleSummaryTaskResponse>> claimSummaryTasks(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestParam(defaultValue = "50") int limit) {
+
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(articleService.claimSummaryTasks(limit));
+    }
+
+    @PatchMapping("/api/articles/summarization/complete")
+    public ResponseEntity<Map<String, Integer>> updateSummariesBatch(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody List<ArticleSummaryUpdateRequest> requests) {
+
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        int updated = articleService.updateSummariesBatch(requests);
+        return ResponseEntity.ok(Map.of("updated", updated));
+    }
+
+    @PatchMapping("/api/articles/summarization/fail")
+    public ResponseEntity<Map<String, Integer>> failSummariesBatch(
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody ArticleSummaryFailureRequest request) {
+
+        if (!collectorApiKey.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        int failed = articleService.failSummaryBatch(request.getIds(), request.getError());
         return ResponseEntity.ok(Map.of("failed", failed));
     }
 }

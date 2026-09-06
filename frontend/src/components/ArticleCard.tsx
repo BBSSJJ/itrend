@@ -32,9 +32,14 @@ export default function ArticleCard({ article }: Props) {
         )}
       </div>
       <h2 className={styles.title}>{article.title}</h2>
-      {article.description && (
+      {article.summary ? (
+        <div className={styles.summaryBlock}>
+          <span className={styles.summaryBadge}>AI 요약</span>
+          <p className={styles.summary}>{article.summary}</p>
+        </div>
+      ) : article.description ? (
         <p className={styles.description}>{article.description}</p>
-      )}
+      ) : null}
       {article.tags.length > 0 && (
         <ul className={styles.tags}>
           {article.tags.map((tag) => (
