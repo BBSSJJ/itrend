@@ -37,7 +37,7 @@ class TaggingWorkflowIntegrationTests {
     private EntityManager entityManager;
 
     @Test
-    void claimsAndCompletesTaggingTaskWithMetadata() throws Exception {
+    void claimsAndCompletesHybridTaggingTaskWithMetadata() throws Exception {
         completeExistingTaggingTasks();
         saveArticle("https://example.com/tagging-workflow-complete");
 
@@ -55,8 +55,8 @@ class TaggingWorkflowIntegrationTests {
         String completion = """
                 [{
                   "id": %d,
-                  "tags": ["react", "typescript"],
-                  "method": "AI",
+                  "tags": ["monorepo", "optimistic-locking", "load-balancing", "btrfs"],
+                  "method": "HYBRID",
                   "error": null
                 }]
                 """.formatted(articleId);
@@ -74,7 +74,7 @@ class TaggingWorkflowIntegrationTests {
                 .isEqualTo("COMPLETED");
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT tagging_method FROM articles WHERE id = ?", String.class, articleId))
-                .isEqualTo("AI");
+                .isEqualTo("HYBRID");
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT tagged_at IS NOT NULL FROM articles WHERE id = ?", Boolean.class, articleId))
                 .isTrue();

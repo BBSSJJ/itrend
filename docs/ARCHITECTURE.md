@@ -32,9 +32,10 @@ RSS / Hacker News / Dev.to
 태깅은 수집과 분리되어 있다. `collector/src/tagger-job.js`가 서버에서 대기 또는
 재시도 가능한 기사를 선점하고 Groq 또는 키워드 태거를 실행한 뒤 완료나 실패를
 서버에 보고한다. Groq 태거는 `openai/gpt-oss-20b`의 strict JSON Schema를
-사용하며 폐쇄형 canonical 태그만 반환한다. Collector와 Server가 기사당 태그를
-0~5개로 제한한다. AI 키가 없거나 호출이 실패하면 키워드 태거를 사용하고 그 처리
-방법과 원인을 함께 기록한다.
+사용하며 폐쇄형 canonical 태그만 반환한다. 고정밀 한국어·영문 별칭으로 먼저
+찾은 태그는 AI 결과와 병합하고 `HYBRID` 처리로 기록한다. Collector와 Server가
+기사당 태그를 0~5개로 제한한다. AI 키가 없거나 호출이 실패하면 키워드 태거를
+사용하고 그 처리 방법과 원인을 함께 기록한다.
 태깅 직전에는 원본 `description`을 변경하지 않고 HTML, Markdown 이미지, URL,
 제어 문자와 반복 공백을 제거한 전용 입력을 만든다. 정제된 제목은 최대 200자,
 설명은 최대 600자로 제한하며 Groq와 키워드 태거가 같은 입력을 사용한다. Groq
@@ -44,7 +45,8 @@ RSS / Hacker News / Dev.to
 
 Canonical 태그 목록의 단일 원본은 `config/canonical-tags.json`이다. Collector는
 이 파일을 직접 읽고 Server 빌드는 같은 파일을 classpath resource로 복사하여 태그
-저장 전에 다시 검증한다.
+저장 전에 다시 검증한다. 현재 기사 집합에서 확인된 모노리포, 낙관적 잠금, 부하
+분산과 Btrfs도 각각 canonical 태그로 관리한다.
 
 ### Server
 

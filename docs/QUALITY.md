@@ -21,7 +21,8 @@ GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 �
 - 서버 JUnit 테스트는 PostgreSQL 16 컨테이너를 사용한다.
 - 프런트엔드는 ESLint, TypeScript 검사와 프로덕션 빌드를 실행한다.
 - Collector는 JavaScript 구문 검사와 Node 내장 테스트를 실행한다.
-- Collector는 폐쇄형 strict schema, canonical 정규화와 키워드 대체 처리 메타데이터를 테스트한다.
+- Collector는 폐쇄형 strict schema, canonical 정규화, 고정밀 별칭 선태깅과
+  AI 결과 병합, 키워드 대체 처리 메타데이터를 테스트한다.
 - Collector는 태깅 전용 입력의 HTML·Markdown·URL·공백 정제, 길이 제한,
   원본 불변성과 키워드 오탐 방지를 테스트한다.
 - 서버는 출처 계약과 태깅 작업의 선점·완료·실패·canonical 태그 거부를 통합 테스트한다.
@@ -29,12 +30,13 @@ GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 �
 
 ## 최근 수동 검증에서 확인한 한계
 
-- 실제 Groq와 로컬 서버로 빈 태그 기사 29개를 재태깅했을 때 모두
-  `COMPLETED / AI`로 저장됐고 오류나 키워드 폴백은 없었다.
-- 13개 기사에 총 21개 태그가 생성됐으며 16개는 여전히 빈 태그였다.
-- `go`, `testing`, `claude`, `hadoop`, `kubernetes` 등은 복구됐지만 본문에
-  명시된 `kafka`를 AI가 놓치는 사례가 남아 있어 고정밀 별칭 선태깅과 AI 결과
-  병합이 필요하다.
+- 실제 Groq와 로컬 서버로 전체 기사 50개를 재태깅했을 때 모두 `COMPLETED`로
+  저장됐고 오류나 키워드 폴백은 없었다. 22개는 `AI`, 28개는 `HYBRID` 방식이었다.
+- 총 72개 태그가 생성됐으며 빈 태그 기사는 기존 16개에서 5개로 줄었다.
+- `kafka`, `grafana`, `ai-agent`, `cli`와 새 taxonomy인 `monorepo`,
+  `optimistic-locking`, `load-balancing`, `btrfs`가 실제 누락 기사에 저장됐다.
+- 설명이 없거나 짧은 기사와 의미 기반 분류가 필요한 기사 5개는 여전히 빈 태그다.
+  소스 메타데이터 보강과 고정 평가 fixture가 추가로 필요하다.
 
 ## 품질 원칙
 
