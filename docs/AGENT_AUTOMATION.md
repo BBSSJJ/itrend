@@ -38,14 +38,21 @@ claude --version
 ./scripts/issue-agent-monitor --watch 120
 ```
 
-로그인 후 항상 백그라운드에서 감시하려면 macOS 사용자 `launchd`
+로그인 후 백그라운드에서 감시하려면 macOS 사용자 `launchd`
 서비스를 설치한다. 인자로 감시 간격을 초 단위로 지정할 수 있다.
+설치 직후에는 안전하게 OFF 상태다.
 
 ```bash
 ./scripts/issue-agent-service install
 ./scripts/issue-agent-service install 120
+./scripts/issue-agent-service start
+./scripts/issue-agent-service stop
 ./scripts/issue-agent-service status
 ```
+
+`start`는 모니터를 ON으로 바꾸고 재로그인 후에도 자동 실행하게 한다.
+`stop`은 서비스 설정과 로그를 보존하면서 재로그인 후에도 OFF 상태를
+유지한다.
 
 제거할 때는 다음을 실행한다. 이 명령은 서비스와 plist만 제거하고
 작업 worktree와 로그는 보존한다.
