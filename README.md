@@ -58,6 +58,9 @@ cd collector && npm start
 프런트엔드 린트와 프로덕션 빌드를 실행합니다. GitHub Actions도 같은 명령을
 사용합니다.
 
+로컬에서 GitHub Issue를 감지해 Codex나 Claude Code에 위임하는
+절차는 [Issue agent monitor](docs/AGENT_AUTOMATION.md)를 참고하세요.
+
 ## 개발과 배포의 경계
 
 개발과 배포는 실행 환경으로 구분합니다. 애플리케이션 코드와 검증 절차는
