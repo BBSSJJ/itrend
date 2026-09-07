@@ -29,4 +29,16 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             LIMIT :limit
             """, nativeQuery = true)
     List<Article> findTaggingCandidatesForUpdate(@Param("limit") int limit);
+
+    @Query(value = """
+            SELECT * FROM articles
+            WHERE summary_status = 'PENDING'
+               OR (summary_status = 'FAILED' AND summary_attempts < 3)
+               OR (summary_status = 'PROCESSING'
+                   AND summary_started_at < CURRENT_TIMESTAMP - INTERVAL '15 minutes')
+            ORDER BY id
+            FOR UPDATE SKIP LOCKED
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Article> findSummaryCandidatesForUpdate(@Param("limit") int limit);
 }

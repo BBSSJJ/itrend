@@ -93,6 +93,67 @@ test('AI 태거는 정제되고 길이가 제한된 기사 입력을 전송한�
   assert.ok(!input.description.includes('example.com'))
   assert.ok(input.description.length <= 600)
   assert.match(request.messages[0].content, /engineering methods, architecture, operations/)
+  assert.ok(!userPrompt.includes('Respond with this exact JSON'))
+  assert.ok(!userPrompt.includes('["spring-boot", "jpa", "postgresql"]'))
+})
+
+test('고정밀 선태그는 AI가 놓쳐도 결과에 병합한다', async () => {
+  const groqClient = {
+    chat: {
+      completions: {
+        async create() {
+          return {
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  results: [{ index: 0, tags: [] }],
+                }),
+              },
+            }],
+          }
+        },
+      },
+    },
+  }
+
+  const [article] = await tagBatch([{
+    id: 1,
+    title: 'AI 에이전트를 위한 Android CLI',
+    description: 'Golang으로 쿠버네티스 운영 도구를 개발합니다.',
+  }], { apiKey: 'test', groqClient })
+
+  assert.equal(article.taggingMethod, 'HYBRID')
+  assert.deepEqual(article.tags, ['ai-agent', 'android', 'cli', 'go', 'kubernetes'])
+})
+
+test('병합 결과는 선태그를 우선 보존하며 최대 5개로 제한한다', async () => {
+  const groqClient = {
+    chat: {
+      completions: {
+        async create() {
+          return {
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  results: [{
+                    index: 0,
+                    tags: ['react', 'typescript', 'vite', 'css', 'html'],
+                  }],
+                }),
+              },
+            }],
+          }
+        },
+      },
+    },
+  }
+
+  const [article] = await tagBatch([{
+    id: 1,
+    title: 'Kafka on Kubernetes',
+  }], { apiKey: 'test', groqClient })
+
+  assert.deepEqual(article.tags, ['kafka', 'kubernetes', 'react', 'typescript', 'vite'])
 })
 
 test('AI 호출 실패는 키워드 대체 처리와 원인을 기록한다', async () => {

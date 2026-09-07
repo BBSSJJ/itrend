@@ -26,8 +26,8 @@ cp collector/.env.example collector/.env
 ```
 
 `collector/.env`의 `COLLECTOR_API_KEY`는 서버의 같은 환경변수 값과 맞춰야
-합니다. AI 태깅에 Groq를 사용하려면 `GROQ_API_KEY`도 설정합니다. 키가
-없으면 수집기는 키워드 태깅으로 대체합니다.
+합니다. AI 태깅과 요약에 Groq를 사용하려면 `GROQ_API_KEY`도 설정합니다. 키가
+없으면 태깅은 키워드 방식으로 대체되지만 요약은 실패 상태로 기록됩니다.
 
 각 애플리케이션은 별도 터미널에서 실행합니다.
 
@@ -43,9 +43,10 @@ cd collector && npm start
 ```
 
 기본 개발 DB는 `docker compose up -d postgres`로 실행합니다. 수집은
-`POST http://localhost:3001/collect`, 태깅은 `POST http://localhost:3001/tag`로
-수동 실행할 수 있습니다. 이 요청은 실제 외부 API와 구성된 LLM을 호출할 수
-있으므로 전체 검증 명령에는 포함되지 않습니다.
+`POST http://localhost:3001/collect`, 태깅은 `POST http://localhost:3001/tag`,
+요약은 `POST http://localhost:3001/summarize`로 수동 실행할 수 있습니다. 이
+요청은 실제 외부 API와 구성된 LLM을 호출할 수 있으므로 전체 검증 명령에는
+포함되지 않습니다.
 
 ## 검증
 

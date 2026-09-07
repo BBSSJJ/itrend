@@ -28,3 +28,17 @@ test('RSS는 마지막 수집 이후 항목과 발행일 없는 항목만 반환
   assert.ok(articles.every(article => article.sourceCode === 'test-rss'))
   assert.ok(articles.every(article => !('sourceId' in article)))
 })
+
+test('RSS 설명은 일반 필드를 우선하고 Medium의 encoded snippet도 지원한다', () => {
+  const adapter = new RssAdapter({ id: 'test-rss' })
+
+  assert.equal(adapter.normalize({
+    contentSnippet: '일반 설명',
+    summary: '요약 필드',
+    'content:encodedSnippet': '인코딩 설명',
+  }).description, '일반 설명')
+
+  assert.equal(adapter.normalize({
+    'content:encodedSnippet': 'Medium 본문 설명',
+  }).description, 'Medium 본문 설명')
+})

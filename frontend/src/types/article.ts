@@ -8,6 +8,7 @@ export interface Article {
   createdAt: string
   sourceCode: string
   sourceName: string
+  summary: string | null
   tags: string[]
 }
 

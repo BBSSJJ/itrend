@@ -1,7 +1,7 @@
 # ITrend agent guide
 
-ITrend collects IT articles, enriches them with AI-generated tags and, later,
-summaries, and presents them in a searchable web interface.
+ITrend collects IT articles, enriches them with AI-generated tags and summaries,
+and presents them in a searchable web interface.
 
 ## Read first
 
@@ -34,6 +34,16 @@ disagree, verify the behavior and update the stale document in the same change.
 7. Record meaningful follow-up work in `docs/plans/tech-debt.md`.
 8. Treat documentation as current truth, not an append-only changelog: replace
    stale status, remove resolved debt, and use Git or pull requests for history.
+
+## Context7 MCP
+
+- When a task depends on current documentation for a library, framework, SDK,
+  API, CLI tool, or cloud service, use Context7 MCP before implementing or
+  advising, even if the technology is familiar.
+- Do not use Context7 for repository-local business logic, general programming
+  concepts, simple refactoring, or tasks that do not need external documentation.
+- The user does not need to name Context7 explicitly; select it automatically
+  when these conditions apply.
 
 ## Commands
 

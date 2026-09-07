@@ -25,11 +25,15 @@ VALUES
     ('socar-tech', '쏘카 기술 블로그', 'https://tech.socarcorp.kr/feed', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('banksalad-tech', '뱅크샐러드 기술 블로그', 'https://blog.banksalad.com/rss.xml', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('nhn-meetup', 'NHN Cloud Meetup', 'https://meetup.nhncloud.com/rss', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('oliveyoung-tech', '올리브영 테크블로그', 'https://oliveyoung.tech/rss.xml', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('daangn-tech', '당근 기술 블로그', 'https://medium.com/feed/daangn', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('geeknews', 'GeekNews', 'https://news.hada.io/rss/news', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('aws-blog', 'AWS Blog', 'https://aws.amazon.com/blogs/aws/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('spring-blog', 'Spring Blog', 'https://spring.io/blog.atom', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('thenewstack', 'The New Stack', 'https://thenewstack.io/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('infoq', 'InfoQ', 'https://feed.infoq.com/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('cloudflare-blog', 'Cloudflare Blog', 'https://blog.cloudflare.com/rss/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
+    ('github-engineering', 'GitHub Engineering', 'https://github.blog/engineering/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('hackernews', 'Hacker News', 'https://hacker-news.firebaseio.com/v0', 'api', 'hn_api', '{"limit": 30}'::jsonb, TRUE, 'active'),
     ('devto', 'Dev.to', 'https://dev.to/api/articles', 'api', 'devto_api', '{"limit": 30}'::jsonb, TRUE, 'active')
 ON CONFLICT (code) DO NOTHING;
@@ -49,6 +53,12 @@ CREATE TABLE IF NOT EXISTS articles (
     tagging_error TEXT,
     tagged_at    TIMESTAMP,
     summary      TEXT,
+    summary_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    summary_attempts INT NOT NULL DEFAULT 0,
+    summary_started_at TIMESTAMP,
+    summary_model VARCHAR(100),
+    summary_error TEXT,
+    summarized_at TIMESTAMP,
     source_id    BIGINT        NOT NULL REFERENCES sources(id)
 );
 
@@ -59,9 +69,21 @@ ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_started_at TIMESTAMP;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_method VARCHAR(30);
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS tagging_error TEXT;
 
+-- 기존 로컬 볼륨에도 요약 작업 상태 컬럼을 안전하게 추가한다.
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summary_status VARCHAR(20) NOT NULL DEFAULT 'PENDING';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summary_attempts INT NOT NULL DEFAULT 0;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summary_started_at TIMESTAMP;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summary_model VARCHAR(100);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summary_error TEXT;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS summarized_at TIMESTAMP;
+
 UPDATE articles
 SET tagging_status = 'COMPLETED'
 WHERE tagged_at IS NOT NULL AND tagging_status = 'PENDING';
+
+UPDATE articles
+SET summary_status = 'COMPLETED', summarized_at = COALESCE(summarized_at, NOW())
+WHERE summary IS NOT NULL AND BTRIM(summary) <> '' AND summary_status = 'PENDING';
 
 CREATE TABLE IF NOT EXISTS tags (
     id   BIGSERIAL    PRIMARY KEY,
@@ -79,4 +101,6 @@ CREATE INDEX IF NOT EXISTS idx_articles_source_id    ON articles(source_id);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_articles_tagging_queue
     ON articles(tagging_status, tagging_started_at, id);
+CREATE INDEX IF NOT EXISTS idx_articles_summary_queue
+    ON articles(summary_status, summary_started_at, id);
 CREATE INDEX IF NOT EXISTS idx_tags_name             ON tags(name);

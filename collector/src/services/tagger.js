@@ -5,7 +5,7 @@
  * GROQ_API_KEY 미설정 시 keywordTagger로 폴백한다.
  */
 const Groq = require('groq-sdk')
-const { tag: keywordTag } = require('./keywordTagger')
+const { pretag, tag: keywordTag } = require('./keywordTagger')
 const { prepareTaggingInput } = require('./taggingText')
 const { CANONICAL_TAGS, SYNONYMS } = require('../config/keywords')
 
@@ -91,10 +91,7 @@ Rules:
 - Include engineering-method and operations tags when they are central, such as "testing", "observability", or "ai-strategy"
 - Treat Korean names and common aliases as their canonical tag: "Golang" → "go", "쿠버네티스" → "kubernetes", "AI 에이전트" → "ai-agent"
 - Select tags only from the canonical list; never invent a new tag
-- Non-IT articles → return empty tags array
-
-Respond with this exact JSON:
-{"results": [{"index": 0, "tags": ["spring-boot", "jpa", "postgresql"]}]}`
+- Non-IT articles → return empty tags array`
 
   const response = await groqClient.chat.completions.create({
     model: MODEL_ID,
@@ -119,6 +116,7 @@ async function tagBatch(articles, {
   apiKey = process.env.GROQ_API_KEY,
   groqClient,
   keywordTagger = keywordTag,
+  preTagger = pretag,
   sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
 } = {}) {
   if (articles.length === 0) return []
@@ -133,6 +131,7 @@ async function tagBatch(articles, {
   }
 
   const clientForRequest = groqClient ?? getClient()
+  const pretagged = articles.map(article => preTagger(article))
 
   const allResults = []
 
@@ -169,8 +168,13 @@ async function tagBatch(articles, {
     }
     return {
       ...article,
-      tags: normalizeTags(Array.isArray(r.tags) ? r.tags : []).slice(0, 5),
-      taggingMethod: r.taggingMethod,
+      tags: normalizeTags([
+        ...pretagged[i],
+        ...(Array.isArray(r.tags) ? r.tags : []),
+      ]).slice(0, 5),
+      taggingMethod: r.taggingMethod === 'AI' && pretagged[i].length > 0
+        ? 'HYBRID'
+        : r.taggingMethod,
       taggingError: r.taggingError,
     }
   })

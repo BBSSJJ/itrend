@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class TaggingWorkflowIntegrationTests {
+class SummarizationWorkflowIntegrationTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -37,31 +38,30 @@ class TaggingWorkflowIntegrationTests {
     private EntityManager entityManager;
 
     @Test
-    void claimsAndCompletesHybridTaggingTaskWithMetadata() throws Exception {
-        completeExistingTaggingTasks();
-        saveArticle("https://example.com/tagging-workflow-complete");
+    void claimsCompletesAndReturnsSummaryWithMetadata() throws Exception {
+        completeExistingSummaryTasks();
+        saveArticle("https://example.com/summary-workflow-complete", "2099-02-01T00:00:00Z");
 
         JsonNode tasks = claimTasks();
         long articleId = tasks.get(0).get("id").asLong();
         entityManager.flush();
 
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_status FROM articles WHERE id = ?", String.class, articleId))
+                "SELECT summary_status FROM articles WHERE id = ?", String.class, articleId))
                 .isEqualTo("PROCESSING");
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_attempts FROM articles WHERE id = ?", Integer.class, articleId))
+                "SELECT summary_attempts FROM articles WHERE id = ?", Integer.class, articleId))
                 .isEqualTo(1);
 
         String completion = """
                 [{
                   "id": %d,
-                  "tags": ["monorepo", "optimistic-locking", "load-balancing", "btrfs"],
-                  "method": "HYBRID",
-                  "error": null
+                  "summary": "React와 TypeScript를 활용한 프런트엔드 개발을 설명한다.",
+                  "model": "openai/gpt-oss-20b"
                 }]
                 """.formatted(articleId);
 
-        mockMvc.perform(patch("/api/articles/tagging/complete")
+        mockMvc.perform(patch("/api/articles/summarization/complete")
                         .header("X-API-Key", "dev-secret-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(completion))
@@ -70,31 +70,32 @@ class TaggingWorkflowIntegrationTests {
         entityManager.flush();
 
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_status FROM articles WHERE id = ?", String.class, articleId))
+                "SELECT summary_status FROM articles WHERE id = ?", String.class, articleId))
                 .isEqualTo("COMPLETED");
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_method FROM articles WHERE id = ?", String.class, articleId))
-                .isEqualTo("HYBRID");
+                "SELECT summary_model FROM articles WHERE id = ?", String.class, articleId))
+                .isEqualTo("openai/gpt-oss-20b");
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagged_at IS NOT NULL FROM articles WHERE id = ?", Boolean.class, articleId))
+                "SELECT summarized_at IS NOT NULL FROM articles WHERE id = ?", Boolean.class, articleId))
                 .isTrue();
+
+        mockMvc.perform(get("/api/articles").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].summary")
+                        .value("React와 TypeScript를 활용한 프런트엔드 개발을 설명한다."));
     }
 
     @Test
-    void rejectsTagsOutsideCanonicalTaxonomy() throws Exception {
-        completeExistingTaggingTasks();
-        saveArticle("https://example.com/tagging-workflow-invalid-tag");
+    void rejectsSummaryLongerThanContractLimit() throws Exception {
+        completeExistingSummaryTasks();
+        saveArticle("https://example.com/summary-workflow-too-long", null);
         long articleId = claimTasks().get(0).get("id").asLong();
 
-        String completion = """
-                [{
-                  "id": %d,
-                  "tags": ["invented-tag"],
-                  "method": "AI"
-                }]
-                """.formatted(articleId);
+        String completion = objectMapper.writeValueAsString(new Object[]{
+                new SummaryCompletion(articleId, "가".repeat(501), "openai/gpt-oss-20b")
+        });
 
-        mockMvc.perform(patch("/api/articles/tagging/complete")
+        mockMvc.perform(patch("/api/articles/summarization/complete")
                         .header("X-API-Key", "dev-secret-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(completion))
@@ -102,9 +103,9 @@ class TaggingWorkflowIntegrationTests {
     }
 
     @Test
-    void recordsFailedTaggingTaskForRetry() throws Exception {
-        completeExistingTaggingTasks();
-        saveArticle("https://example.com/tagging-workflow-failure");
+    void recordsFailedSummaryTaskForRetry() throws Exception {
+        completeExistingSummaryTasks();
+        saveArticle("https://example.com/summary-workflow-failure", null);
         long articleId = claimTasks().get(0).get("id").asLong();
 
         String failure = """
@@ -114,7 +115,7 @@ class TaggingWorkflowIntegrationTests {
                 }
                 """.formatted(articleId);
 
-        mockMvc.perform(patch("/api/articles/tagging/fail")
+        mockMvc.perform(patch("/api/articles/summarization/fail")
                         .header("X-API-Key", "dev-secret-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(failure))
@@ -123,29 +124,33 @@ class TaggingWorkflowIntegrationTests {
         entityManager.flush();
 
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_status FROM articles WHERE id = ?", String.class, articleId))
+                "SELECT summary_status FROM articles WHERE id = ?", String.class, articleId))
                 .isEqualTo("FAILED");
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT tagging_error FROM articles WHERE id = ?", String.class, articleId))
+                "SELECT summary_error FROM articles WHERE id = ?", String.class, articleId))
                 .isEqualTo("provider unavailable");
     }
 
-    private void completeExistingTaggingTasks() {
+    private void completeExistingSummaryTasks() {
         jdbcTemplate.update("""
                 UPDATE articles
-                SET tagging_status = 'COMPLETED', tagged_at = COALESCE(tagged_at, NOW())
+                SET summary_status = 'COMPLETED', summarized_at = COALESCE(summarized_at, NOW())
                 """);
     }
 
-    private void saveArticle(String url) throws Exception {
+    private void saveArticle(String url, String publishedAt) throws Exception {
+        String publishedAtProperty = publishedAt == null
+                ? ""
+                : "\"publishedAt\": \"" + publishedAt + "\",";
         String request = """
                 [{
-                  "title": "Tagging workflow test",
+                  "title": "Summary workflow test",
                   "url": "%s",
-                  "description": "React and TypeScript",
+                  %s
+                  "description": "React and TypeScript frontend development",
                   "sourceCode": "kakao-tech"
                 }]
-                """.formatted(url);
+                """.formatted(url, publishedAtProperty);
 
         mockMvc.perform(post("/api/articles/batch")
                         .header("X-API-Key", "dev-secret-key")
@@ -156,12 +161,15 @@ class TaggingWorkflowIntegrationTests {
     }
 
     private JsonNode claimTasks() throws Exception {
-        String response = mockMvc.perform(post("/api/articles/tagging/claim")
+        String response = mockMvc.perform(post("/api/articles/summarization/claim")
                         .header("X-API-Key", "dev-secret-key")
                         .param("limit", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response);
+    }
+
+    private record SummaryCompletion(long id, String summary, String model) {
     }
 }

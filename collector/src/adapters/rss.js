@@ -47,7 +47,10 @@ class RssAdapter extends BaseAdapter {
     return {
       title: item.title?.trim(),                        // ?. : null-safe 접근 (Java의 Optional과 유사)
       url: item.link,
-      description: item.contentSnippet || item.summary || null,  // 있는 것 중 첫 번째 사용
+      description: item.contentSnippet
+        || item.summary
+        || item['content:encodedSnippet']
+        || null,                                       // Medium 등 content:encoded 기반 피드 지원
       author: item.creator || null,
       publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
       sourceCode: this.source.id,

@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "articles")
+@DynamicUpdate
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article {
@@ -60,6 +62,25 @@ public class Article {
     @Column(columnDefinition = "text")
     private String summary;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "summary_status", nullable = false)
+    private SummaryStatus summaryStatus = SummaryStatus.PENDING;
+
+    @Column(name = "summary_attempts", nullable = false)
+    private int summaryAttempts;
+
+    @Column(name = "summary_started_at")
+    private LocalDateTime summaryStartedAt;
+
+    @Column(name = "summary_model")
+    private String summaryModel;
+
+    @Column(name = "summary_error", columnDefinition = "text")
+    private String summaryError;
+
+    @Column(name = "summarized_at")
+    private LocalDateTime summarizedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_id", nullable = false)
     private Source source;
@@ -76,6 +97,7 @@ public class Article {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         if (this.taggingStatus == null) this.taggingStatus = TaggingStatus.PENDING;
+        if (this.summaryStatus == null) this.summaryStatus = SummaryStatus.PENDING;
     }
 
     @Builder
@@ -115,5 +137,27 @@ public class Article {
         this.taggingMethod = null;
         this.taggingError = error;
         this.taggedAt = null;
+    }
+
+    public void claimSummary() {
+        this.summaryStatus = SummaryStatus.PROCESSING;
+        this.summaryStartedAt = LocalDateTime.now();
+        this.summaryAttempts++;
+        this.summaryError = null;
+    }
+
+    public void completeSummary(String summary, String model) {
+        this.summary = summary;
+        this.summaryStatus = SummaryStatus.COMPLETED;
+        this.summaryModel = model;
+        this.summaryError = null;
+        this.summarizedAt = LocalDateTime.now();
+    }
+
+    public void failSummary(String error) {
+        this.summaryStatus = SummaryStatus.FAILED;
+        this.summaryModel = null;
+        this.summaryError = error;
+        this.summarizedAt = null;
     }
 }

@@ -56,5 +56,6 @@ module.exports = {
   TITLE_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   cleanTaggingText,
+  truncateAtWordBoundary,
   prepareTaggingInput,
 }
