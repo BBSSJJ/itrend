@@ -10,13 +10,10 @@ required_files=(
   "config/canonical-tags.json"
   "docs/PRODUCT.md"
   "docs/ARCHITECTURE.md"
-  "docs/AGENT_AUTOMATION.md"
   "docs/QUALITY.md"
   "docs/WORKFLOW.md"
   "docs/plans/README.md"
   "docs/plans/tech-debt.md"
-  "scripts/issue-agent-monitor"
-  "scripts/issue-agent-launchd"
 )
 
 echo "[check] Harness 파일 확인"
@@ -28,11 +25,7 @@ for relative_path in "${required_files[@]}"; do
 done
 
 echo "[check] 셸 스크립트 구문 검사"
-bash -n \
-  "$repo_root/scripts/setup" \
-  "$repo_root/scripts/check" \
-  "$repo_root/scripts/issue-agent-monitor" \
-  "$repo_root/scripts/issue-agent-launchd"
+bash -n "$repo_root/scripts/setup" "$repo_root/scripts/check"
 
 echo "[check] Canonical 태그 검사"
 node -e '

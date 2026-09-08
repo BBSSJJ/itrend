@@ -46,14 +46,6 @@ docs/deployment-guide
 chore/agent-harness
 ```
 
-Automated Issue work uses exactly one `type:feat`, `type:fix`, `type:test`,
-`type:docs`, or `type:chore` label. The monitor maps that label to both the
-branch prefix and the Conventional Commit type. It creates branches as
-`<type>/issue-<number>-<timestamp>` and commits as
-`<type>: #<number> <Korean Issue title>`. The scope is omitted because the
-runner is execution metadata, not a code area. Record the runner in Issue and
-pull request metadata instead.
-
 ## Commit preparation
 
 Before committing:
