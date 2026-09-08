@@ -43,11 +43,11 @@ claude --version
 설치 직후에는 안전하게 OFF 상태다.
 
 ```bash
-./scripts/issue-agent-service install
-./scripts/issue-agent-service install 120
-./scripts/issue-agent-service start
-./scripts/issue-agent-service stop
-./scripts/issue-agent-service status
+./scripts/issue-agent-launchd install
+./scripts/issue-agent-launchd install 120
+./scripts/issue-agent-launchd start
+./scripts/issue-agent-launchd stop
+./scripts/issue-agent-launchd status
 ```
 
 `start`는 모니터를 ON으로 바꾸고 재로그인 후에도 자동 실행하게 한다.
@@ -58,7 +58,7 @@ claude --version
 작업 worktree와 로그는 보존한다.
 
 ```bash
-./scripts/issue-agent-service uninstall
+./scripts/issue-agent-launchd uninstall
 ```
 
 컴퓨터가 꺼져 있거나 macOS 사용자가 로그인하지 않아 로컬 인증
@@ -66,15 +66,19 @@ claude --version
 
 ## Issue 사용법
 
-1. 작업 범위와 완료 조건이 분명한 Issue를 작성한다.
+1. 작업 범위와 완료 조건이 분명한 Issue를 작성한다. Issue
+   제목은 자동 커밋 요약으로 사용하므로 한국어를 포함해야 한다.
 2. `agent:codex` 또는 `agent:claude` 중 하나만 붙인다.
-3. 마지막으로 `agent:ready`를 붙여 로컬 실행을 승인한다.
-4. `agent:running`이 붙으면 Issue 댓글과 로컬 로그를 확인한다.
-5. 완료 후 `agent:review`가 붙은 Draft PR의 diff와 CI를 검토한다.
+3. 커밋 유형 라벨 `type:feat`, `type:fix`, `type:test`, `type:docs`,
+   `type:chore` 중 하나만 붙인다.
+4. 마지막으로 `agent:ready`를 붙여 로컬 실행을 승인한다.
+5. `agent:running`이 붙으면 Issue 댓글과 로컬 로그를 확인한다.
+6. 완료 후 `agent:review`가 붙은 Draft PR의 diff와 CI를 검토한다.
 
 `agent:ready`만 새 실행을 시작하는 신호다. 모니터가 Issue를 가져가면
 `agent:ready`를 제거하고 `agent:running`을 붙인다. 실행기 라벨이 없거나
 두 개 모두 있으면 `agent:failed`로 표시한다.
+커밋 유형 라벨이 없거나 두 개 이상이어도 같은 방식으로 중단한다.
 
 ## 라벨
 
@@ -86,13 +90,22 @@ claude --version
 | `agent:running` | 에이전트 또는 검증이 로컬에서 실행 중임 |
 | `agent:review` | Draft PR이 생성돼 사람의 검토를 기다림 |
 | `agent:failed` | 라우팅, 에이전트, 검증 또는 전달 단계가 실패함 |
+| `type:feat` | 사용자 기능 추가 또는 변경 |
+| `type:fix` | 결함 수정 |
+| `type:test` | 테스트 전용 변경 |
+| `type:docs` | 문서 전용 변경 |
+| `type:chore` | 도구, 하네스, 유지보수 변경 |
 
 ## 산출물과 실패 복구
 
 - worktree: `${TMPDIR:-/tmp}/itrend-issue-agents/<repo>/`
 - 로그: `.git/issue-agent-logs/issue-<number>-<runner>-<timestamp>.log`
 - 서비스 로그: `~/Library/Logs/ITrend/issue-agent-monitor*.log`
-- 브랜치: `agent/<runner>-issue-<number>-<timestamp>`
+- 브랜치: `<type>/issue-<number>-<timestamp>`
+- 커밋: `<type>: #<number> <한국어 Issue 제목>`
+
+실행기 종류는 Issue 댓글과 Draft PR에 기록한다. 브랜치명이나 Conventional
+Commit scope에는 넣지 않는다.
 
 성공하면 worktree를 제거하고 브랜치와 Draft PR을 남긴다. 실패하면
 조사할 수 있게 worktree와 로그를 남긴다. 원인을 해결한 뒤

@@ -13,11 +13,11 @@ poll_interval="${ITREND_AGENT_POLL_INTERVAL:-60}"
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/issue-agent-service install [seconds]
-  ./scripts/issue-agent-service start
-  ./scripts/issue-agent-service stop
-  ./scripts/issue-agent-service status
-  ./scripts/issue-agent-service uninstall
+  ./scripts/issue-agent-launchd install [seconds]
+  ./scripts/issue-agent-launchd start
+  ./scripts/issue-agent-launchd stop
+  ./scripts/issue-agent-launchd status
+  ./scripts/issue-agent-launchd uninstall
 
 Manage the per-user macOS launchd service for the local Issue agent monitor.
 Installation is stopped by default. Use start and stop to toggle monitoring.
@@ -25,7 +25,7 @@ EOF
 }
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "issue-agent-service supports macOS launchd only." >&2
+  echo "issue-agent-launchd supports macOS launchd only." >&2
   exit 1
 fi
 
@@ -33,7 +33,7 @@ action="${1:-}"
 
 require_installation() {
   if [[ ! -f "$plist_file" ]]; then
-    echo "Service is not installed. Run: ./scripts/issue-agent-service install" >&2
+    echo "Service is not installed. Run: ./scripts/issue-agent-launchd install" >&2
     exit 1
   fi
 }
@@ -83,7 +83,7 @@ case "$action" in
     plutil -lint "$plist_file"
 
     echo "Installed $service_label in the OFF state (polling interval: $poll_interval seconds)."
-    echo "Turn it on with: ./scripts/issue-agent-service start"
+    echo "Turn it on with: ./scripts/issue-agent-launchd start"
     ;;
   start)
     [[ $# -eq 1 ]] || { usage >&2; exit 2; }

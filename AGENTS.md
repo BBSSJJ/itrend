@@ -35,6 +35,22 @@ disagree, verify the behavior and update the stale document in the same change.
 8. Treat documentation as current truth, not an append-only changelog: replace
    stale status, remove resolved debt, and use Git or pull requests for history.
 
+## Requirement discovery
+
+- For a proposed feature or behavior change, identify the problem, intended
+  outcome, and acceptance criteria before editing.
+- If an unresolved choice would materially change the user experience, public
+  API, data model, security, cost, or task scope, ask a focused clarification
+  question before editing.
+- Ask only questions whose answers would change the implementation. Do not
+  block progress on minor, reversible details.
+- For low-risk gaps, state the assumption and proceed with the most reversible
+  option that remains within the requested scope.
+- Once the request is sufficiently clear, briefly restate the objective and
+  completion criteria, then begin implementation.
+- Treat requests to explore, explain, or compare as read-only unless the user
+  also asks to implement a change.
+
 ## Context7 MCP
 
 - When a task depends on current documentation for a library, framework, SDK,

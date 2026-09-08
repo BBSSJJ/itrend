@@ -171,7 +171,8 @@ run_agent() {
 
 process_one_issue() {
   local issue_json issue_number issue_title issue_body issue_url
-  local runner_count runner timestamp branch_name worktree_path log_file prompt_file
+  local runner_count runner commit_type_count commit_type
+  local timestamp branch_name worktree_path log_file prompt_file
   local pr_url
 
   issue_json="$(
@@ -200,6 +201,12 @@ process_one_issue() {
     jq '[.labels[].name | select(. == "agent:codex" or . == "agent:claude")] | length' \
       <<<"$issue_json"
   )"
+  commit_type_count="$(
+    jq '[.labels[].name | select(
+      . == "type:feat" or . == "type:fix" or . == "type:test" or
+      . == "type:docs" or . == "type:chore"
+    )] | length' <<<"$issue_json"
+  )"
 
   gh issue edit "$issue_number" --repo "$repo_slug" \
     --remove-label "agent:ready,agent:failed" \
@@ -210,10 +217,26 @@ process_one_issue() {
       "agent:codex와 agent:claude 중 하나의 실행기 라벨이 필요합니다."
     return 1
   fi
+  if [[ "$commit_type_count" -ne 1 ]]; then
+    mark_failed "$issue_number" \
+      "type:feat, type:fix, type:test, type:docs, type:chore 중 하나의 변경 유형 라벨이 필요합니다."
+    return 1
+  fi
+  if [[ ! "$issue_title" =~ [가-힣] ]]; then
+    mark_failed "$issue_number" \
+      "Conventional Commit의 한국어 요약으로 사용할 수 있게 Issue 제목에 한국어를 포함해주세요."
+    return 1
+  fi
 
   runner="$(
     jq -r '.labels[].name | select(. == "agent:codex" or . == "agent:claude") | sub("agent:"; "")' \
       <<<"$issue_json"
+  )"
+  commit_type="$(
+    jq -r '.labels[].name | select(
+      . == "type:feat" or . == "type:fix" or . == "type:test" or
+      . == "type:docs" or . == "type:chore"
+    ) | sub("type:"; "")' <<<"$issue_json"
   )"
   if ! command -v "$runner" >/dev/null 2>&1; then
     mark_failed "$issue_number" "로컬에 $runner CLI가 설치되어 있지 않습니다."
@@ -226,7 +249,7 @@ process_one_issue() {
   fi
 
   timestamp="$(date -u +%Y%m%d%H%M%S)"
-  branch_name="agent/$runner-issue-$issue_number-$timestamp"
+  branch_name="$commit_type/issue-$issue_number-$timestamp"
   worktree_path="$worktree_root/issue-$issue_number-$runner-$timestamp"
   log_file="$log_root/issue-$issue_number-$runner-$timestamp.log"
   mkdir -p "$worktree_root" "$log_root"
@@ -252,6 +275,7 @@ process_one_issue() {
       "" \
       "Issue: $issue_url" \
       "Title: $issue_title" \
+      "Commit type: $commit_type" \
       "" \
       "Issue body:" \
       "$issue_body"
@@ -306,7 +330,7 @@ process_one_issue() {
   fi
 
   if ! git -C "$worktree_path" commit \
-    -m "chore(agent): #$issue_number Issue 작업 반영"; then
+    -m "$commit_type: #$issue_number $issue_title"; then
     mark_failed "$issue_number" \
       "commit을 만들지 못했습니다." \
       "commit 실패. worktree: $worktree_path"
