@@ -15,6 +15,12 @@ GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 �
 외부 뉴스 소스와 LLM API는 안정성과 비용 문제 때문에 기본 검증에서 호출하지
 않는다.
 
+Issue 에이전트 자동화는 사람이 `agent:ready` 라벨로 승인한 작업만
+로컬 모니터에서 실행한다. 에이전트 변경은 별도 Git worktree에서
+`./scripts/check`를 통과해야 Draft PR로 제출되며 자동 병합하지 않는다.
+로컬 인증, 실행기 선택과 실패 복구 절차는
+`docs/AGENT_AUTOMATION.md`에 정의한다.
+
 ## 검증 범위
 
 - 셸 스크립트 구문과 canonical 태그 파일의 형태·중복을 검사한다.
