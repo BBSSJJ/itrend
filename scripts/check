@@ -4,6 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 required_files=(
+  ".agents/skills/issue-triage/SKILL.md"
   "AGENTS.md"
   "README.md"
   "collector/.env.example"
@@ -23,6 +24,44 @@ for relative_path in "${required_files[@]}"; do
     exit 1
   fi
 done
+
+echo "[check] Agent skill 형식 검사"
+node -e '
+const fs = require("node:fs")
+const content = fs.readFileSync(process.argv[1], "utf8")
+const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+if (!match) {
+  throw new Error("SKILL.md YAML frontmatter가 없거나 형식이 잘못됐습니다")
+}
+
+const fields = new Map()
+for (const line of match[1].split(/\r?\n/)) {
+  const field = line.match(/^([a-z][a-z0-9-]*):\s*(.+)$/)
+  if (!field) {
+    throw new Error(`SKILL.md frontmatter 필드 형식이 잘못됐습니다: ${line}`)
+  }
+  if (fields.has(field[1])) {
+    throw new Error(`SKILL.md frontmatter 필드가 중복됩니다: ${field[1]}`)
+  }
+  fields.set(field[1], field[2].trim())
+}
+
+const keys = [...fields.keys()].sort()
+if (keys.join(",") !== "description,name") {
+  throw new Error(`SKILL.md frontmatter는 name과 description만 포함해야 합니다: ${keys.join(", ")}`)
+}
+const name = fields.get("name")
+const description = fields.get("description")
+if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) || name.length > 64) {
+  throw new Error(`SKILL.md name이 잘못됐습니다: ${name}`)
+}
+if (!description || description.length > 1024 || /[<>]/.test(description)) {
+  throw new Error("SKILL.md description이 잘못됐습니다")
+}
+if (/^\s*\[TODO:/m.test(content)) {
+  throw new Error("SKILL.md에 미완성 TODO가 남아 있습니다")
+}
+' "$repo_root/.agents/skills/issue-triage/SKILL.md"
 
 echo "[check] 셸 스크립트 구문 검사"
 bash -n "$repo_root/scripts/setup" "$repo_root/scripts/check"

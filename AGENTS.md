@@ -51,6 +51,18 @@ disagree, verify the behavior and update the stale document in the same change.
 - Treat requests to explore, explain, or compare as read-only unless the user
   also asks to implement a change.
 
+## Issue-driven work
+
+- When the user asks to inspect, review, analyze, prioritize, or plan GitHub
+  Issues, use `.agents/skills/issue-triage/SKILL.md`.
+- Treat Issue review as read-only and report in the current conversation. Do
+  not change the repository or GitHub state unless the user explicitly asks.
+- Do not begin implementation until the user identifies an Issue and approves
+  its direction after reviewing the analysis and any material open questions.
+- A request to implement an approved Issue and create a Draft PR authorizes the
+  task branch, scoped edits, verification, commit, push, and Draft PR for that
+  Issue. It never authorizes merging the pull request.
+
 ## Context7 MCP
 
 - When a task depends on current documentation for a library, framework, SDK,
