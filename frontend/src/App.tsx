@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchArticles, fetchPopularTags } from './api/articles'
 import TagFilter from './components/TagFilter'
 import ArticleCard from './components/ArticleCard'
+import Pagination from './components/Pagination'
 import type { Article, Page } from './types/article'
 import './App.css'
 
@@ -73,15 +74,11 @@ export default function App() {
             </div>
 
             {data.totalPages > 1 && (
-              <div className="pagination">
-                <button disabled={page === 0} onClick={() => handlePageChange(page - 1)}>
-                  이전
-                </button>
-                <span>{page + 1} / {data.totalPages}</span>
-                <button disabled={data.last} onClick={() => handlePageChange(page + 1)}>
-                  다음
-                </button>
-              </div>
+              <Pagination
+                currentPage={data.number}
+                totalPages={data.totalPages}
+                onPageChange={handlePageChange}
+              />
             )}
           </>
         )}
