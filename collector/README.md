@@ -1,14 +1,14 @@
 # ITrend Collector
 
-외부 RSS와 공개 API에서 기사를 수집하고, 서버에 저장된 태깅 및 요약 작업을
-처리하는 Node.js 애플리케이션이다. 세 작업은 서로 독립적으로 실행한다.
+한국어 콘텐츠를 제공하는 국내 RSS에서 기사를 수집하고, 서버에 저장된 태깅 및
+요약 작업을 처리하는 Node.js 애플리케이션이다. 세 작업은 서로 독립적으로 실행한다.
 
 ## 역할과 데이터 흐름
 
 ### 기사 수집
 
 1. `src/config/sources.js`에서 활성 소스를 읽는다.
-2. RSS, Hacker News 또는 Dev.to 어댑터가 새 기사를 공통 형태로 정규화한다.
+2. 활성화된 RSS 어댑터가 새 기사를 공통 형태로 정규화한다.
 3. `POST /api/articles/batch`로 원본 메타데이터를 서버에 저장한다.
 4. 전송이 성공하면 `state.json`의 소스별 수집 시점을 갱신한다.
 
@@ -57,7 +57,9 @@ collector/
 ```
 
 현재 소스 목록과 활성 상태는 중복 문서화하지 않고
-`src/config/sources.js`를 단일 기준으로 삼는다. `src/scheduler.js`는 아직 실행
+`src/config/sources.js`를 단일 기준으로 삼는다. 초기 배포에서는 국내 출처만
+활성화하며 해외 RSS와 Hacker News, Dev.to 어댑터는 비활성 상태로 유지한다.
+`src/scheduler.js`는 아직 실행
 진입점에 연결되지 않았으므로 수집과 태깅은 수동으로 시작해야 한다.
 
 ## 실행

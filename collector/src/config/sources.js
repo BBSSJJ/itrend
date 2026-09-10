@@ -108,13 +108,13 @@ module.exports = [
     config: {},
   },
 
-  // ── 해외 기술 블로그 (RSS) ──────────────────────────
+  // ── 해외 기술 블로그 (초기 배포 수집 제외) ───────────
   {
     id: 'aws-blog',
     name: 'AWS Blog',
     url: 'https://aws.amazon.com/blogs/aws/feed/',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
   {
@@ -122,7 +122,7 @@ module.exports = [
     name: 'Spring Blog',
     url: 'https://spring.io/blog.atom',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
   {
@@ -130,7 +130,7 @@ module.exports = [
     name: 'The New Stack',
     url: 'https://thenewstack.io/feed/',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
   {
@@ -138,7 +138,7 @@ module.exports = [
     name: 'InfoQ',
     url: 'https://feed.infoq.com/',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
   {
@@ -146,7 +146,7 @@ module.exports = [
     name: 'Cloudflare Blog',
     url: 'https://blog.cloudflare.com/rss/',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
   {
@@ -154,17 +154,17 @@ module.exports = [
     name: 'GitHub Engineering',
     url: 'https://github.blog/engineering/feed/',
     adapterType: 'rss',
-    isActive: true,
+    isActive: false,
     config: {},
   },
 
-  // ── API ────────────────────────────────────────────
+  // ── 해외 공개 API (초기 배포 수집 제외) ──────────────
   {
     id: 'hackernews',
     name: 'Hacker News',
     url: 'https://hacker-news.firebaseio.com/v0',
     adapterType: 'hn_api',
-    isActive: true,
+    isActive: false,
     config: { limit: 30 },
   },
   {
@@ -172,7 +172,7 @@ module.exports = [
     name: 'Dev.to',
     url: 'https://dev.to/api/articles',
     adapterType: 'devto_api',
-    isActive: true,
+    isActive: false,
     config: { limit: 30 },
   },
 ]
