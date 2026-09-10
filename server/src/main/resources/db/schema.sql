@@ -28,14 +28,14 @@ VALUES
     ('oliveyoung-tech', '올리브영 테크블로그', 'https://oliveyoung.tech/rss.xml', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('daangn-tech', '당근 기술 블로그', 'https://medium.com/feed/daangn', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
     ('geeknews', 'GeekNews', 'https://news.hada.io/rss/news', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('aws-blog', 'AWS Blog', 'https://aws.amazon.com/blogs/aws/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('spring-blog', 'Spring Blog', 'https://spring.io/blog.atom', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('thenewstack', 'The New Stack', 'https://thenewstack.io/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('infoq', 'InfoQ', 'https://feed.infoq.com/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('cloudflare-blog', 'Cloudflare Blog', 'https://blog.cloudflare.com/rss/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('github-engineering', 'GitHub Engineering', 'https://github.blog/engineering/feed/', 'rss', 'rss', '{}'::jsonb, TRUE, 'active'),
-    ('hackernews', 'Hacker News', 'https://hacker-news.firebaseio.com/v0', 'api', 'hn_api', '{"limit": 30}'::jsonb, TRUE, 'active'),
-    ('devto', 'Dev.to', 'https://dev.to/api/articles', 'api', 'devto_api', '{"limit": 30}'::jsonb, TRUE, 'active')
+    ('aws-blog', 'AWS Blog', 'https://aws.amazon.com/blogs/aws/feed/', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('spring-blog', 'Spring Blog', 'https://spring.io/blog.atom', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('thenewstack', 'The New Stack', 'https://thenewstack.io/feed/', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('infoq', 'InfoQ', 'https://feed.infoq.com/', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('cloudflare-blog', 'Cloudflare Blog', 'https://blog.cloudflare.com/rss/', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('github-engineering', 'GitHub Engineering', 'https://github.blog/engineering/feed/', 'rss', 'rss', '{}'::jsonb, FALSE, 'inactive'),
+    ('hackernews', 'Hacker News', 'https://hacker-news.firebaseio.com/v0', 'api', 'hn_api', '{"limit": 30}'::jsonb, FALSE, 'inactive'),
+    ('devto', 'Dev.to', 'https://dev.to/api/articles', 'api', 'devto_api', '{"limit": 30}'::jsonb, FALSE, 'inactive')
 ON CONFLICT (code) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS articles (

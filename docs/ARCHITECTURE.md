@@ -3,7 +3,7 @@
 ## 시스템 개요
 
 ```text
-RSS / Hacker News / Dev.to
+한국어 중심 RSS 출처
             |
             v
   Node.js collector :3001
@@ -26,6 +26,9 @@ RSS / Hacker News / Dev.to
 `collector/src/adapters/`가 서로 다른 외부 소스를 공통 기사 형태로 정규화한다.
 `collector/src/collector.js`가 활성 소스를 순회하고 서버로 배치를 전송한다.
 각 기사는 Collector 설정의 `id`를 안정적인 `sourceCode`로 전송한다.
+초기 배포에서는 한국어 콘텐츠를 제공하는 국내 출처만 활성화한다. 해외 RSS와
+Hacker News, Dev.to 어댑터는 향후 범위 확장에 대비해 유지하되 수집하지 않는다.
+이 정책은 기사별 언어 판별이 아니라 출처의 활성 상태를 기준으로 적용한다.
 RSS 설명은 일반 description 필드뿐 아니라 Medium 계열 피드의
 `content:encodedSnippet`도 정규화하여 태깅과 요약 입력으로 사용한다.
 마지막 수집 상태는 개발 환경의 `collector/state.json`에 저장되며 Git에서
