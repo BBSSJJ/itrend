@@ -10,6 +10,7 @@
 | Server | Gradle/JUnit 단위·HTTP 통합 테스트, PostgreSQL 스키마 검증 포함 |
 | Frontend | ESLint, TypeScript 검사, Vite 프로덕션 빌드 |
 | Repository | 필수 하네스 문서와 예제 환경 파일 존재 여부 |
+| Deployment | Dockerfile과 Kubernetes Kustomization 존재 여부, 로컬 kubectl이 있으면 렌더링 |
 
 GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 실행한다.
 외부 뉴스 소스와 LLM API는 안정성과 비용 문제 때문에 기본 검증에서 호출하지
@@ -32,6 +33,10 @@ GitHub Actions는 pull request와 `main` 브랜치 push에서 같은 명령을 �
 - 엔드투엔드 수집, 태깅 및 요약 테스트가 없다.
 
 ## 최근 수동 검증에서 확인한 한계
+
+- Kubernetes의 `deploy/local-quick` 시험 배포에서 Frontend, Server, PostgreSQL과
+  Quick Tunnel 기동 및 공개 HTTPS `/healthz`, 기사 API 응답을 확인했다. 배포 DB는
+  새로 초기화했으며 기사 수는 0건이다. Collector 자동 실행은 중지 상태다.
 
 - 실제 Groq와 로컬 서버로 전체 기사 50개를 재태깅했을 때 모두 `COMPLETED`로
   저장됐고 오류나 키워드 폴백은 없었다. 22개는 `AI`, 28개는 `HYBRID` 방식이었다.

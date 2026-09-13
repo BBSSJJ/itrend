@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../quick
+images:
+  - name: ghcr.io/bbssjj/itrend-server
+    newName: docker.io/library/itrend-server
+    newTag: test
+  - name: ghcr.io/bbssjj/itrend-frontend
+    newName: docker.io/library/itrend-frontend
+    newTag: test
+  - name: ghcr.io/bbssjj/itrend-collector
+    newName: docker.io/library/itrend-collector
+    newTag: test
+patches:
+  - target:
+      kind: Deployment
+      name: itrend-(server|frontend)
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          kubernetes.io/hostname: k8s-worker-1
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target:
+      kind: CronJob
+      name: itrend-collector
+    patch: |-
+      - op: add
+        path: /spec/jobTemplate/spec/template/spec/nodeSelector
+        value:
+          kubernetes.io/hostname: k8s-worker-1
+      - op: replace
+        path: /spec/jobTemplate/spec/template/spec/containers/0/imagePullPolicy
+        value: Never

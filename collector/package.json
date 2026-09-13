@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "collect": "node -e \"require('./src/collector').collect()\"",
+    "pipeline": "node pipeline.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
@@ -15,7 +16,6 @@
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "groq-sdk": "^1.2.1",
-    "node-cron": "^3.0.3",
     "rss-parser": "^3.13.0"
   }
 }

@@ -56,12 +56,20 @@ cd collector && npm start
 이 명령은 Collector 테스트, 서버 테스트, 프런트엔드 린트와 프로덕션 빌드를
 포함한 저장소 전체 검증을 실행합니다.
 
+## Kubernetes 수동 배포
+
+노트북의 가상 머신 클러스터에는 Cloudflare Tunnel을 외부 진입점으로 사용합니다.
+Ingress Controller나 공유기 포트 포워딩 없이 Frontend만 공개하며, 이미지 빌드부터
+Secret 생성, 배포와 롤백까지의 절차는
+[수동 Kubernetes 배포](docs/DEPLOYMENT.md)에 정리되어 있습니다.
+
 ## 문서
 
 - [제품 목적과 범위](docs/PRODUCT.md)
 - [시스템 구조와 데이터 흐름](docs/ARCHITECTURE.md)
 - [검증 현황과 알려진 한계](docs/QUALITY.md)
 - [Git 작업 방식](docs/WORKFLOW.md)
+- [수동 Kubernetes 배포](docs/DEPLOYMENT.md)
 - [계획과 기술 부채](docs/plans/README.md)
 
 구성요소별 자세한 실행 방법은
