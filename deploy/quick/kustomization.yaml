@@ -32,6 +32,6 @@ patches:
         path: /spec/template/spec/containers/0/livenessProbe
 images:
   - name: docker.io/0326bsj/itrend-server
-    newTag: 1c99266843cf61dea77b3fb0d0165c5c3dc42ffc
+    newTag: 4653954d5d08fdd77e886e33df8b7d93f41116d0
   - name: docker.io/0326bsj/itrend-frontend
-    newTag: 1c99266843cf61dea77b3fb0d0165c5c3dc42ffc
+    newTag: 4653954d5d08fdd77e886e33df8b7d93f41116d0
