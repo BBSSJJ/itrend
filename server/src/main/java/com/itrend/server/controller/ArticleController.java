@@ -29,17 +29,19 @@ public class ArticleController {
     private String collectorApiKey;
 
     @PostMapping("/api/articles/batch")
-    public ResponseEntity<Map<String, Integer>> saveBatch(
+    public ResponseEntity<Map<String, Object>> saveBatch(
             @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestParam(required = false) Integer limit,
             @RequestBody List<ArticleSaveRequest> requests) {
 
         if (!collectorApiKey.equals(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        int saved = articleService.saveAll(requests);
+        List<Long> savedIds = articleService.saveAllWithIds(requests, limit);
+        int saved = savedIds.size();
         int skipped = requests.size() - saved;
-        return ResponseEntity.ok(Map.of("saved", saved, "skipped", skipped));
+        return ResponseEntity.ok(Map.of("saved", saved, "skipped", skipped, "savedIds", savedIds));
     }
 
     @GetMapping("/api/articles")
@@ -61,12 +63,13 @@ public class ArticleController {
     @PostMapping("/api/articles/tagging/claim")
     public ResponseEntity<List<ArticleTaggingTaskResponse>> claimTaggingTasks(
             @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody(required = false) List<Long> ids,
             @RequestParam(defaultValue = "50") int limit) {
 
         if (!collectorApiKey.equals(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(articleService.claimTaggingTasks(limit));
+        return ResponseEntity.ok(articleService.claimTaggingTasks(limit, ids));
     }
 
     @PatchMapping("/api/articles/tagging/complete")
@@ -98,12 +101,13 @@ public class ArticleController {
     @PostMapping("/api/articles/summarization/claim")
     public ResponseEntity<List<ArticleSummaryTaskResponse>> claimSummaryTasks(
             @RequestHeader(value = "X-API-Key", required = false) String apiKey,
+            @RequestBody(required = false) List<Long> ids,
             @RequestParam(defaultValue = "50") int limit) {
 
         if (!collectorApiKey.equals(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(articleService.claimSummaryTasks(limit));
+        return ResponseEntity.ok(articleService.claimSummaryTasks(limit, ids));
     }
 
     @PatchMapping("/api/articles/summarization/complete")

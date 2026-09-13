@@ -79,6 +79,9 @@ npm --prefix collector run collect
 # 수집, 태깅과 요약을 순차 실행
 npm --prefix collector run pipeline
 
+# 신규 기사 최대 10건만 저장하고 해당 기사만 태깅·요약
+npm --prefix collector run pipeline -- --limit 10
+
 # 테스트
 npm --prefix collector test
 ```

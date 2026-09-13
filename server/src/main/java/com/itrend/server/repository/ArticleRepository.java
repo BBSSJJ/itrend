@@ -12,6 +12,22 @@ import java.util.Optional;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {
 
+    @Query(value = """
+            SELECT * FROM articles WHERE id IN (:ids) AND (
+                tagging_status = 'PENDING' OR (tagging_status = 'FAILED' AND tagging_attempts < 3)
+                OR (tagging_status = 'PROCESSING' AND tagging_started_at < CURRENT_TIMESTAMP - INTERVAL '15 minutes'))
+            ORDER BY id FOR UPDATE SKIP LOCKED LIMIT :limit
+            """, nativeQuery = true)
+    List<Article> findScopedTaggingCandidatesForUpdate(@Param("limit") int limit, @Param("ids") List<Long> ids);
+
+    @Query(value = """
+            SELECT * FROM articles WHERE id IN (:ids) AND (
+                summary_status = 'PENDING' OR (summary_status = 'FAILED' AND summary_attempts < 3)
+                OR (summary_status = 'PROCESSING' AND summary_started_at < CURRENT_TIMESTAMP - INTERVAL '15 minutes'))
+            ORDER BY id FOR UPDATE SKIP LOCKED LIMIT :limit
+            """, nativeQuery = true)
+    List<Article> findScopedSummaryCandidatesForUpdate(@Param("limit") int limit, @Param("ids") List<Long> ids);
+
     boolean existsByUrl(String url);
 
     Optional<Article> findByUrl(String url);

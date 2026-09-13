@@ -36,7 +36,11 @@ async function reportSummaryFailure(chunk, error) {
   }
 }
 
-async function runSummarizerJob() {
+async function runSummarizerJob({ ids } = {}) {
+  if (ids !== undefined && (!Array.isArray(ids) || ids.some(id => !Number.isSafeInteger(id) || id < 1))) {
+    throw new Error('ids must be an array of positive IDs')
+  }
+  if (ids?.length === 0) return
   if (!BE_API_URL) {
     console.error('[SUMMARIZER-JOB] BE_API_URL 미설정')
     return
@@ -48,7 +52,7 @@ async function runSummarizerJob() {
   while (true) {
     const { data: articles } = await axios.post(
       `${BE_API_URL}/api/articles/summarization/claim`,
-      null,
+      ids ?? null,
       {
         params: { limit: BATCH_LIMIT },
         headers: { 'X-API-Key': API_KEY },

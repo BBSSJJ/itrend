@@ -256,6 +256,18 @@ kubectl -n itrend wait --for=condition=complete \
   --timeout=6h "job/$ITREND_JOB_NAME"
 ```
 
+처음에는 저장 상한을 지정한 별도 이미지나 Job 명령으로 소량 검증한다. 현재
+Collector 이미지는 인자를 그대로 전달할 수 있도록 다음처럼 실행한다.
+
+```bash
+kubectl -n itrend create job --from=cronjob/itrend-collector \
+  "${ITREND_JOB_NAME}-limit"
+kubectl -n itrend set env job/"${ITREND_JOB_NAME}-limit" COLLECTOR_LIMIT=10
+```
+
+`--limit`은 중복을 제외한 신규 저장 최대 건수다. 제한 실행은 Collector 체크포인트를
+갱신하지 않으므로 일부 피드 항목이 다음 실행에서 다시 확인될 수 있다.
+
 자동 수집을 승인한 뒤에는 스케줄과 실행 비용을 다시 검토하고 `suspend: false`로
 변경한다.
 

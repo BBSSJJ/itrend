@@ -88,7 +88,8 @@ Spring Boot API가 기사, 태그, 출처 엔티티를 PostgreSQL에 저장한�
 
 주요 API:
 
-- `POST /api/articles/batch`: 수집 기사 저장
+- `POST /api/articles/batch`: 수집 기사 저장 (`limit` 쿼리로 신규 저장 상한을 지정할 수
+  있으며 응답의 `savedIds`는 실제 신규 기사 ID를 반환)
 - `GET /api/articles`: 최신 기사 페이지 조회 및 태그 필터
 - `GET /api/tags/popular`: 사용 빈도 기준 인기 태그
 - `POST /api/articles/tagging/claim`: 태깅 작업 선점
@@ -99,6 +100,11 @@ Spring Boot API가 기사, 태그, 출처 엔티티를 PostgreSQL에 저장한�
 - `PATCH /api/articles/summarization/fail`: 요약 실패 기록
 
 Collector가 호출하는 쓰기, 태깅, 요약 작업 API는 모두 `X-API-Key`로 보호된다.
+
+수동 제한 수집은 Collector가 `pipeline --limit N`으로 실행한다. Server는 중복을
+제외한 신규 저장 건수만 상한에 포함하고, Collector는 응답의 `savedIds`에 한정해
+태깅과 요약 작업을 선점한다. 제한 실행에서는 일부 피드 항목이 다음 실행에서 다시
+조회될 수 있도록 Collector 체크포인트를 갱신하지 않는다.
 
 ### Frontend
 

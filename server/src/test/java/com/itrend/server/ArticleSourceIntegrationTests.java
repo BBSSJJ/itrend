@@ -61,4 +61,22 @@ class ArticleSourceIntegrationTests {
                         .content(request))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void savesAtMostRequestedNewArticlesAndReturnsIds() throws Exception {
+        String request = """
+                [
+                  {"title":"Limit one","url":"https://example.com/limit-one","sourceCode":"kakao-tech"},
+                  {"title":"Limit two","url":"https://example.com/limit-two","sourceCode":"kakao-tech"}
+                ]
+                """;
+
+        mockMvc.perform(post("/api/articles/batch").param("limit", "1")
+                        .header("X-API-Key", "dev-secret-key")
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saved").value(1))
+                .andExpect(jsonPath("$.skipped").value(1))
+                .andExpect(jsonPath("$.savedIds.length()").value(1));
+    }
 }

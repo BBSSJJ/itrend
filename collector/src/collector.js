@@ -11,7 +11,7 @@ const ADAPTERS = {
   devto_api: DevToAdapter,
 }
 
-async function collectOne(source) {
+async function collectOne(source, remainingLimit) {
   const AdapterClass = ADAPTERS[source.adapterType]
   if (!AdapterClass) {
     console.warn(`[SKIP] 알 수 없는 어댑터: ${source.adapterType} (${source.name})`)
@@ -32,28 +32,33 @@ async function collectOne(source) {
       return { count: 0, error: null }
     }
 
-    await send(articles)
+    const candidates = remainingLimit === undefined ? articles : articles.slice(0, remainingLimit)
+    const result = await send(candidates, remainingLimit)
 
     const stateUpdate = { lastFetched: new Date().toISOString() }
     if (source.adapterType === 'hn_api') {
       const maxId = Math.max(...articles.map(a => a._hnId || 0))
       if (maxId > 0) stateUpdate.lastItemId = maxId
     }
-    state.update(source.id, stateUpdate)
+    if (remainingLimit === undefined) state.update(source.id, stateUpdate)
 
-    return { count: articles.length, error: null }
+    return { count: result.savedIds?.length ?? candidates.length, ids: result.savedIds ?? [], error: null }
   } catch (err) {
-    return { count: 0, error: err.message }
+    return { count: 0, ids: [], error: err.message }
   }
 }
 
-async function collect() {
+async function collect({ limit } = {}) {
   const active = sources.filter(s => s.isActive)
   console.log(`\n[COLLECT] ${active.length}개 소스 수집 시작\n`)
 
+  const savedIds = []
   for (const source of active) {
     console.log(`[FETCH] ${source.name}...`)
-    const result = await collectOne(source)
+    const remaining = limit === undefined ? undefined : limit - savedIds.length
+    if (remaining !== undefined && remaining <= 0) break
+    const result = await collectOne(source, remaining)
+    savedIds.push(...result.ids)
 
     if (result.error) {
       console.error(`  [ERROR] ${result.error}`)
@@ -62,7 +67,8 @@ async function collect() {
     }
   }
 
-  console.log('\n[COLLECT] 완료\n')
+  console.log(`\n[COLLECT] 완료 (신규 저장 ${savedIds.length}개)\n`)
+  return savedIds
 }
 
 module.exports = { collect }
