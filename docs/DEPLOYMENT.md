@@ -105,10 +105,15 @@ sudo install -d -m 0770 -o 1000 -g 1000 /var/lib/itrend/collector
 
 `.github/workflows/release.yml`은 `main` 변경을 검증한 뒤 Docker Hub의
 `0326bsj/itrend-{collector,server,frontend}` 저장소에 커밋 SHA 태그로 amd64
-이미지를 push하고 `deploy/k8s/kustomization.yaml`의 태그를 자동 갱신한다.
-GitHub 저장소에 `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` Actions Secret을 등록해야
-한다. `deploy/argocd/itrend-application.yaml`을 Argo CD에 한 번 적용하면 이후
-Argo CD가 `deploy/quick`을 감시해 자동 동기화하고 drift를 self-heal한다.
+이미지만 push한다. GitHub 저장소에 `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` Actions
+Secret을 등록해야 한다. Argo CD Image Updater가 새 40자리 SHA 태그를 감지해
+`deploy/k8s/kustomization.yaml`에 Git write-back하고, Argo CD가 `deploy/quick`을
+자동 동기화한다. Image Updater의 Git write-back을 위해 Argo CD에 이 저장소를
+push할 수 있는 Deploy Key 또는 PAT 자격 증명도 등록해야 한다.
+
+Image Updater는 클러스터에 별도로 설치한다. 설치 후
+`deploy/argocd/itrend-application.yaml`을 Argo CD에 적용하면 이미지 감시와
+자동 반영이 시작된다.
 
 노트북은 arm64, 클러스터 노드는 amd64이므로 플랫폼을 명시한다. GHCR에 먼저
 로그인하고 저장소 루트에서 실행한다.
