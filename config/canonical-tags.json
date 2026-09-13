@@ -146,6 +146,7 @@
   "aks",
   "cosmos-db",
   "serverless",
+  "saas",
   "vercel",
   "netlify",
   "cloudflare",
@@ -307,5 +308,7 @@
   "blockchain",
   "web3",
   "ar-vr",
-  "quantum-computing"
+  "quantum-computing",
+  "3d",
+  "manufacturing"
 ]
