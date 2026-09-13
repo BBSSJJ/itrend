@@ -22,7 +22,6 @@ spec:
         - alias: collector
           imageName: docker.io/0326bsj/itrend-collector
           commonUpdateSettings:
-            forceUpdate: true
             updateStrategy: newest-build
         - alias: frontend
           imageName: docker.io/0326bsj/itrend-frontend
