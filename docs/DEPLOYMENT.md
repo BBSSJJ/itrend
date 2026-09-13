@@ -105,7 +105,8 @@ sudo install -d -m 0770 -o 1000 -g 1000 /var/lib/itrend/collector
 
 `.github/workflows/release.yml`은 `main` 변경을 검증한 뒤 Docker Hub의
 `0326bsj/itrend-{collector,server,frontend}` 저장소에 커밋 SHA 태그로 amd64
-이미지만 push한다. GitHub 저장소에 `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` Actions
+이미지를 push한다. Collector CronJob은 Actions가 GitOps 태그를 함께 갱신하고,
+GitHub 저장소에 `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` Actions
 Secret을 등록해야 한다. Argo CD Image Updater가 새 40자리 SHA 태그를 감지해
 `deploy/k8s/kustomization.yaml`에 Git write-back하고, Argo CD가 `deploy/quick`을
 자동 동기화한다. Image Updater의 Git write-back을 위해 Argo CD에 이 저장소를

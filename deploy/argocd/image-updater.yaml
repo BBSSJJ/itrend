@@ -19,9 +19,5 @@ spec:
       images:
         - alias: server
           imageName: docker.io/0326bsj/itrend-server
-        - alias: collector
-          imageName: docker.io/0326bsj/itrend-collector
-          commonUpdateSettings:
-            updateStrategy: newest-build
         - alias: frontend
           imageName: docker.io/0326bsj/itrend-frontend
