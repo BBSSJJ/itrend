@@ -47,6 +47,14 @@ test('키워드 태거는 모호한 짧은 표현을 별칭으로 선태깅하�
 
 test('선태거는 실제 누락 사례의 명시적인 기술명을 보존한다', () => {
   assert.deepEqual(
+    pretag({ title: 'AI 챗봇 도입과 AX 전환', description: '디지털 전환 전략을 점검합니다.' }),
+    ['ai-strategy', 'digital-transformation'],
+  )
+  assert.deepEqual(
+    pretag({ title: '3D 소프트웨어와 제조업의 SaaS 전환' }),
+    ['3d', 'manufacturing', 'saas'],
+  )
+  assert.deepEqual(
     pretag({ title: '운영하지 않는 Kafka, EasyQueue를 소개합니다' }),
     ['kafka'],
   )
