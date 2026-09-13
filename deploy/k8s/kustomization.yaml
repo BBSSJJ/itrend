@@ -18,4 +18,3 @@ images:
     newTag: manual
   - name: ghcr.io/bbssjj/itrend-frontend
     newTag: manual
-

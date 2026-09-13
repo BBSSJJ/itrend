@@ -12,4 +12,3 @@ runPipeline().catch(error => {
   console.error('[PIPELINE] 실행 실패:', error)
   process.exitCode = 1
 })
-
