@@ -30,3 +30,8 @@ patches:
           - http://itrend-frontend.itrend.svc.cluster.local:80
       - op: remove
         path: /spec/template/spec/containers/0/livenessProbe
+images:
+  - name: docker.io/0326bsj/itrend-server
+    newTag: 658c9c2fbb8998d0482f208baf9078ed34a589ee
+  - name: docker.io/0326bsj/itrend-frontend
+    newTag: 658c9c2fbb8998d0482f208baf9078ed34a589ee
