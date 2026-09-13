@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: collector
-              image: ghcr.io/bbssjj/itrend-collector:manual
+              image: docker.io/0326bsj/itrend-collector:manual
               imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false

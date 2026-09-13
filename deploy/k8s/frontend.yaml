@@ -40,7 +40,7 @@ spec:
               app.kubernetes.io/name: itrend-frontend
       containers:
         - name: frontend
-          image: ghcr.io/bbssjj/itrend-frontend:manual
+          image: docker.io/0326bsj/itrend-frontend:manual
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

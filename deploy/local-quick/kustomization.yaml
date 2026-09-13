@@ -3,13 +3,13 @@ kind: Kustomization
 resources:
   - ../quick
 images:
-  - name: ghcr.io/bbssjj/itrend-server
+  - name: docker.io/0326bsj/itrend-server
     newName: docker.io/library/itrend-server
     newTag: test
-  - name: ghcr.io/bbssjj/itrend-frontend
+  - name: docker.io/0326bsj/itrend-frontend
     newName: docker.io/library/itrend-frontend
     newTag: test
-  - name: ghcr.io/bbssjj/itrend-collector
+  - name: docker.io/0326bsj/itrend-collector
     newName: docker.io/library/itrend-collector
     newTag: test
 patches:
