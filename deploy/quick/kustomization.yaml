@@ -34,6 +34,6 @@ images:
   - name: docker.io/0326bsj/itrend-collector
     newTag: manual
   - name: docker.io/0326bsj/itrend-server
-    newTag: 4653954d5d08fdd77e886e33df8b7d93f41116d0
+    newTag: 2a6a2f17bf094488da70ba8837782a010348ceb3
   - name: docker.io/0326bsj/itrend-frontend
-    newTag: 4653954d5d08fdd77e886e33df8b7d93f41116d0
+    newTag: 2a6a2f17bf094488da70ba8837782a010348ceb3
