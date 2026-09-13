@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: itrend-postgres
+  namespace: itrend
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: itrend-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: itrend-postgres
+  namespace: itrend
+spec:
+  serviceName: itrend-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: itrend-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: itrend-postgres
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: itrend-secrets
+                  key: DB_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: itrend-secrets
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: itrend-secrets
+                  key: DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgres
+              containerPort: 5432
+          startupProbe:
+            tcpSocket:
+              port: postgres
+            periodSeconds: 5
+            failureThreshold: 120
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc 'SELECT 1'
+            timeoutSeconds: 5
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d postgres
+            timeoutSeconds: 5
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-data

@@ -14,9 +14,10 @@
 const fs = require('fs')    // Node.js 내장 모듈: 파일 읽기/쓰기 (별도 설치 불필요)
 const path = require('path')  // Node.js 내장 모듈: 경로 처리 (OS별 경로 구분자 차이 자동 처리)
 
+// 배포에서는 PVC 경로를 환경변수로 지정하고 로컬에서는 기존 위치를 사용한다.
 // __dirname: 현재 파일이 위치한 디렉토리의 절대 경로 (Node.js 내장 변수)
 // path.join으로 조합하면 어떤 OS에서도 올바른 경로가 만들어진다
-const STATE_FILE = path.join(__dirname, '../../state.json')
+const STATE_FILE = process.env.COLLECTOR_STATE_FILE || path.join(__dirname, '../../state.json')
 
 // 파일에서 전체 state 읽기. 파일이 없으면 빈 객체 반환
 function _load() {

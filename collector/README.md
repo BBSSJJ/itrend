@@ -59,8 +59,9 @@ collector/
 현재 소스 목록과 활성 상태는 중복 문서화하지 않고
 `src/config/sources.js`를 단일 기준으로 삼는다. 초기 배포에서는 국내 출처만
 활성화하며 해외 RSS와 Hacker News, Dev.to 어댑터는 비활성 상태로 유지한다.
-`src/scheduler.js`는 아직 실행
-진입점에 연결되지 않았으므로 수집과 태깅은 수동으로 시작해야 한다.
+배포 환경에서는 Kubernetes CronJob 템플릿으로 수집, 태깅과 요약을 순차 실행한다.
+기본 설정은 자동 실행이 중지되어 있으며 자세한 절차는 `../docs/DEPLOYMENT.md`를
+따른다.
 
 ## 실행
 
@@ -74,6 +75,9 @@ npm --prefix collector start
 
 # API 없이 수집만 1회 실행
 npm --prefix collector run collect
+
+# 수집, 태깅과 요약을 순차 실행
+npm --prefix collector run pipeline
 
 # 테스트
 npm --prefix collector test

@@ -11,10 +11,16 @@ required_files=(
   "config/canonical-tags.json"
   "docs/PRODUCT.md"
   "docs/ARCHITECTURE.md"
+  "docs/DEPLOYMENT.md"
   "docs/QUALITY.md"
   "docs/WORKFLOW.md"
   "docs/plans/README.md"
   "docs/plans/tech-debt.md"
+  "collector/Dockerfile"
+  "server/Dockerfile"
+  "frontend/Dockerfile"
+  "frontend/nginx.conf"
+  "deploy/k8s/kustomization.yaml"
 )
 
 echo "[check] Harness 파일 확인"
@@ -24,6 +30,13 @@ for relative_path in "${required_files[@]}"; do
     exit 1
   fi
 done
+
+if command -v kubectl >/dev/null 2>&1; then
+  echo "[check] Kubernetes 매니페스트 렌더링"
+  kubectl kustomize "$repo_root/deploy/k8s" >/dev/null
+  kubectl kustomize "$repo_root/deploy/quick" >/dev/null
+  kubectl kustomize "$repo_root/deploy/local-quick" >/dev/null
+fi
 
 echo "[check] Agent skill 형식 검사"
 node -e '
