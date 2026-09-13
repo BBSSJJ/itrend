@@ -1,0 +1,25 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: itrend
+  namespace: argocd
+spec:
+  commonUpdateSettings:
+    updateStrategy: newest-build
+    allowTags: regexp:^[0-9a-f]{40}$
+  writeBackConfig:
+    method: git
+  applicationRefs:
+    - namePattern: itrend
+      writeBackConfig:
+        method: git
+        gitConfig:
+          branch: main
+          writeBackTarget: kustomization
+      images:
+        - alias: server
+          imageName: docker.io/0326bsj/itrend-server
+        - alias: collector
+          imageName: docker.io/0326bsj/itrend-collector
+        - alias: frontend
+          imageName: docker.io/0326bsj/itrend-frontend

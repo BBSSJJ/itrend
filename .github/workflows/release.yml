@@ -3,6 +3,9 @@ name: release
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - deploy/k8s/**
+      - deploy/quick/**
   workflow_dispatch:
 
 permissions:
