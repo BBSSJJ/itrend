@@ -101,6 +101,20 @@ sudo install -d -m 0770 -o 1000 -g 1000 /var/lib/itrend/collector
 
 ## 이미지 빌드와 push
 
+### Argo CD 기반 CI/CD
+
+`.github/workflows/release.yml`은 `main` 변경을 검증한 뒤 Docker Hub의
+`0326bsj/itrend-{collector,server,frontend}` 저장소에 커밋 SHA 태그로 amd64
+이미지만 push한다. GitHub 저장소에 `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` Actions
+Secret을 등록해야 한다. Argo CD Image Updater가 새 40자리 SHA 태그를 감지해
+`deploy/k8s/kustomization.yaml`에 Git write-back하고, Argo CD가 `deploy/quick`을
+자동 동기화한다. Image Updater의 Git write-back을 위해 Argo CD에 이 저장소를
+push할 수 있는 Deploy Key 또는 PAT 자격 증명도 등록해야 한다.
+
+Image Updater는 클러스터에 별도로 설치한다. 설치 후
+`deploy/argocd/itrend-application.yaml`을 Argo CD에 적용하면 이미지 감시와
+자동 반영이 시작된다.
+
 노트북은 arm64, 클러스터 노드는 amd64이므로 플랫폼을 명시한다. GHCR에 먼저
 로그인하고 저장소 루트에서 실행한다.
 
@@ -109,20 +123,20 @@ export ITREND_DEPLOY_TAG="$(git rev-parse --short HEAD)"
 
 docker buildx build --platform linux/amd64 \
   -f collector/Dockerfile \
-  -t ghcr.io/bbssjj/itrend-collector:manual \
-  -t "ghcr.io/bbssjj/itrend-collector:${ITREND_DEPLOY_TAG}" \
+  -t docker.io/0326bsj/itrend-collector:manual \
+  -t "docker.io/0326bsj/itrend-collector:${ITREND_DEPLOY_TAG}" \
   --push .
 
 docker buildx build --platform linux/amd64 \
   -f server/Dockerfile \
-  -t ghcr.io/bbssjj/itrend-server:manual \
-  -t "ghcr.io/bbssjj/itrend-server:${ITREND_DEPLOY_TAG}" \
+  -t docker.io/0326bsj/itrend-server:manual \
+  -t "docker.io/0326bsj/itrend-server:${ITREND_DEPLOY_TAG}" \
   --push .
 
 docker buildx build --platform linux/amd64 \
   -f frontend/Dockerfile \
-  -t ghcr.io/bbssjj/itrend-frontend:manual \
-  -t "ghcr.io/bbssjj/itrend-frontend:${ITREND_DEPLOY_TAG}" \
+  -t docker.io/0326bsj/itrend-frontend:manual \
+  -t "docker.io/0326bsj/itrend-frontend:${ITREND_DEPLOY_TAG}" \
   --push .
 ```
 
@@ -173,11 +187,11 @@ kubectl kustomize deploy/k8s >/dev/null
 kubectl apply -k deploy/k8s
 
 kubectl -n itrend set image deployment/itrend-server \
-  server="ghcr.io/bbssjj/itrend-server:${ITREND_DEPLOY_TAG}"
+  server="docker.io/0326bsj/itrend-server:${ITREND_DEPLOY_TAG}"
 kubectl -n itrend set image deployment/itrend-frontend \
-  frontend="ghcr.io/bbssjj/itrend-frontend:${ITREND_DEPLOY_TAG}"
+  frontend="docker.io/0326bsj/itrend-frontend:${ITREND_DEPLOY_TAG}"
 kubectl -n itrend set image cronjob/itrend-collector \
-  collector="ghcr.io/bbssjj/itrend-collector:${ITREND_DEPLOY_TAG}"
+  collector="docker.io/0326bsj/itrend-collector:${ITREND_DEPLOY_TAG}"
 
 kubectl -n itrend rollout status statefulset/itrend-postgres --timeout=5m
 kubectl -n itrend rollout status deployment/itrend-server --timeout=5m
@@ -279,7 +293,7 @@ kubectl -n itrend set env job/"${ITREND_JOB_NAME}-limit" COLLECTOR_LIMIT=10
 ```bash
 export ITREND_PREVIOUS_TAG="<previous-tag>"
 kubectl -n itrend set image deployment/itrend-frontend \
-  frontend="ghcr.io/bbssjj/itrend-frontend:${ITREND_PREVIOUS_TAG}"
+  frontend="docker.io/0326bsj/itrend-frontend:${ITREND_PREVIOUS_TAG}"
 kubectl -n itrend rollout status deployment/itrend-frontend --timeout=5m
 ```
 
