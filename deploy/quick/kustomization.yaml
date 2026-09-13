@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../k8s
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: cloudflared
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: add
+        path: /spec/strategy
+        value:
+          type: Recreate
+      - op: remove
+        path: /spec/template/spec/containers/0/env
+      - op: replace
+        path: /spec/template/spec/containers/0/command
+        value:
+          - cloudflared
+          - tunnel
+          - --no-autoupdate
+          - --metrics
+          - 0.0.0.0:2000
+          - --url
+          - http://itrend-frontend.itrend.svc.cluster.local:80
+      - op: remove
+        path: /spec/template/spec/containers/0/livenessProbe

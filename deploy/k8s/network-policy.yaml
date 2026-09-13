@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: itrend
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cloudflared-to-frontend
+  namespace: itrend
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: itrend-frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudflared
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-server
+  namespace: itrend
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: itrend-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: itrend-frontend
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: itrend-collector
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-server-to-postgres
+  namespace: itrend
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: itrend-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: itrend-server
+      ports:
+        - protocol: TCP
+          port: 5432
+

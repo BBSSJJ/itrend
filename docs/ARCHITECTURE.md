@@ -103,9 +103,10 @@ Collector가 호출하는 쓰기, 태깅, 요약 작업 API는 모두 `X-API-Key
 ### Frontend
 
 React 애플리케이션이 기사와 인기 태그 API를 호출한다. 로컬 개발에서는 Vite가
-`/api` 요청을 `localhost:8080`으로 프록시한다. 프로덕션에서는 동일 출처
-라우팅 또는 별도 API 기본 URL 전략이 필요하다. 기사 요약이 있으면 제목 아래에
-원본 설명보다 우선 표시하고 `AI 요약` 배지로 생성 콘텐츠임을 구분한다.
+`/api` 요청을 `localhost:8080`으로 프록시한다. 프로덕션에서는 Nginx가 React
+정적 파일을 제공하고 `/api` 요청을 내부 Server Service로 프록시해 동일 출처
+라우팅을 유지한다. 기사 요약이 있으면 제목 아래에 원본 설명보다 우선 표시하고
+`AI 요약` 배지로 생성 콘텐츠임을 구분한다.
 
 ## 데이터 모델
 
@@ -125,7 +126,19 @@ React 애플리케이션이 기사와 인기 태그 API를 호출한다. 로컬 
 - 배포: 동일한 빌드 결과를 사용하되 DB, 비밀, URL, 실행 프로세스는 환경변수와
   배포 인프라에서 제공
 
-배포 대상이 결정되기 전에는 플랫폼별 설정을 추가하지 않는다.
+현재 수동 배포 대상은 노트북의 가상 머신으로 구성한 kubeadm 클러스터다.
+현재 시험 배포는 `deploy/quick`의 Quick Tunnel을 사용한다. 도메인과 Tunnel 토큰
+없이 단일 cloudflared가 임시 `trycloudflare.com` 주소를 발급하며, 프로세스 재시작 시
+주소가 바뀐다. 도메인이 준비되면 `deploy/k8s`의 정식 Tunnel 구성을 사용한다.
+Cloudflare Tunnel이 외부 HTTPS 트래픽을 Frontend ClusterIP Service로 전달하며
+Ingress Controller와 LoadBalancer는 사용하지 않는다. Server, PostgreSQL과
+Collector는 외부에 노출하지 않는다. Collector는 수집, 태깅, 요약을 순차 수행하는
+일회성 Job으로 시작하며 자동 스케줄은 기본 중지한다.
+
+PostgreSQL과 Collector 상태는 초기 배포에서 `k8s-worker-1`의 local
+PersistentVolume을 사용한다. `Retain` 정책으로 Kubernetes 리소스 삭제와 데이터
+삭제를 분리하지만 노드 장애에 대한 복제나 백업을 제공하지는 않는다. 자세한 준비,
+기존 로컬 데이터 이전, 배포, 검증과 롤백 절차는 `docs/DEPLOYMENT.md`를 따른다.
 
 ## 미구현 경계
 

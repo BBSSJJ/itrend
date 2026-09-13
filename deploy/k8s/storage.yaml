@@ -1,0 +1,80 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: itrend-local
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: itrend-postgres-data
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: itrend-local
+  local:
+    path: /var/lib/itrend/postgres
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-worker-1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: itrend-collector-state
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: itrend-local
+  local:
+    path: /var/lib/itrend/collector
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-worker-1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: itrend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: itrend-local
+  volumeName: itrend-postgres-data
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: collector-state
+  namespace: itrend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: itrend-local
+  volumeName: itrend-collector-state
+  resources:
+    requests:
+      storage: 1Gi
+
