@@ -5,7 +5,11 @@ const BE_API_URL = process.env.BE_API_URL || ''
 const API_KEY = process.env.COLLECTOR_API_KEY || ''
 const BATCH_LIMIT = 50
 
-async function runTaggerJob() {
+async function runTaggerJob({ ids } = {}) {
+  if (ids !== undefined && (!Array.isArray(ids) || ids.some(id => !Number.isSafeInteger(id) || id < 1))) {
+    throw new Error('ids must be an array of positive IDs')
+  }
+  if (ids?.length === 0) return
   if (!BE_API_URL) {
     console.error('[TAGGER-JOB] BE_API_URL 미설정')
     return
@@ -16,7 +20,7 @@ async function runTaggerJob() {
 
   while (true) {
     // 1. 태깅 대기 기사를 원자적으로 선점
-    const { data: articles } = await axios.post(`${BE_API_URL}/api/articles/tagging/claim`, null, {
+    const { data: articles } = await axios.post(`${BE_API_URL}/api/articles/tagging/claim`, ids ?? null, {
       params: { limit: BATCH_LIMIT },
       headers: { 'X-API-Key': API_KEY },
     })

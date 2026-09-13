@@ -14,19 +14,21 @@ function createSender({
   apiKey = process.env.COLLECTOR_API_KEY || '',
   isDev = process.env.NODE_ENV === 'dev',
 } = {}) {
-  return async function sendArticles(articles) {
+  return async function sendArticles(articles, limit) {
     if (!apiUrl || isDev) {
       _logArticles(articles)
-      return
+      return { savedIds: [] }
     }
 
     // _hnId 같은 내부용 필드는 Spring Boot에 보내지 않음
     const payload = articles.map(({ _hnId, ...article }) => article)
 
     try {
-      await httpClient.post(`${apiUrl}/api/articles/batch`, payload, {
+      const response = await httpClient.post(`${apiUrl}/api/articles/batch`, payload, {
         headers: { 'X-API-Key': apiKey },
+        params: limit === undefined ? undefined : { limit },
       })
+      return response.data
     } catch (err) {
       console.error('[SENDER] 전송 실패:', err.message)
       throw err

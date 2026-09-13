@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -42,8 +43,18 @@ public class ArticleService {
 
     @Transactional
     public int saveAll(List<ArticleSaveRequest> requests) {
+        return saveAllWithIds(requests, null).size();
+    }
+
+    @Transactional
+    public List<Long> saveAllWithIds(List<ArticleSaveRequest> requests, Integer limit) {
+        if (limit != null && (limit < 1 || limit > 1000)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Save limit must be between 1 and 1000");
+        }
+        List<Long> savedIds = new ArrayList<>();
         int saved = 0;
         for (ArticleSaveRequest req : requests) {
+            if (limit != null && saved >= limit) break;
             if (articleRepository.existsByUrl(req.getUrl())) continue;
 
             var source = sourceRepository.findByCode(req.getSourceCode())
@@ -69,8 +80,9 @@ public class ArticleService {
             }
 
             saved++;
+            savedIds.add(savedArticle.getId());
         }
-        return saved;
+        return savedIds;
     }
 
     @Transactional(readOnly = true)
@@ -89,11 +101,19 @@ public class ArticleService {
 
     @Transactional
     public List<ArticleTaggingTaskResponse> claimTaggingTasks(int limit) {
+        return claimTaggingTasks(limit, null);
+    }
+
+    @Transactional
+    public List<ArticleTaggingTaskResponse> claimTaggingTasks(int limit, List<Long> ids) {
         if (limit < 1 || limit > 100) {
             throw new ResponseStatusException(BAD_REQUEST, "Tagging limit must be between 1 and 100");
         }
 
-        List<Article> articles = articleRepository.findTaggingCandidatesForUpdate(limit);
+        validateIds(ids);
+        if (ids != null && ids.isEmpty()) return List.of();
+        List<Article> articles = ids == null ? articleRepository.findTaggingCandidatesForUpdate(limit)
+                : articleRepository.findScopedTaggingCandidatesForUpdate(limit, ids);
         articles.forEach(Article::claimTagging);
         return articles.stream().map(ArticleTaggingTaskResponse::from).toList();
     }
@@ -131,11 +151,19 @@ public class ArticleService {
 
     @Transactional
     public List<ArticleSummaryTaskResponse> claimSummaryTasks(int limit) {
+        return claimSummaryTasks(limit, null);
+    }
+
+    @Transactional
+    public List<ArticleSummaryTaskResponse> claimSummaryTasks(int limit, List<Long> ids) {
         if (limit < 1 || limit > 100) {
             throw new ResponseStatusException(BAD_REQUEST, "Summary limit must be between 1 and 100");
         }
 
-        List<Article> articles = articleRepository.findSummaryCandidatesForUpdate(limit);
+        validateIds(ids);
+        if (ids != null && ids.isEmpty()) return List.of();
+        List<Article> articles = ids == null ? articleRepository.findSummaryCandidatesForUpdate(limit)
+                : articleRepository.findScopedSummaryCandidatesForUpdate(limit, ids);
         articles.forEach(Article::claimSummary);
         return articles.stream().map(ArticleSummaryTaskResponse::from).toList();
     }
@@ -185,6 +213,12 @@ public class ArticleService {
             tags.add(tag);
         }
         return tags;
+    }
+
+    private void validateIds(List<Long> ids) {
+        if (ids != null && (ids.size() > 1000 || ids.stream().anyMatch(id -> id == null || id < 1))) {
+            throw new ResponseStatusException(BAD_REQUEST, "ids must contain at most 1000 positive IDs");
+        }
     }
 
     private LocalDateTime parsePublishedAt(String publishedAt) {
