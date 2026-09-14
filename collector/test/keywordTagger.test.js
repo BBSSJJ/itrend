@@ -47,6 +47,10 @@ test('키워드 태거는 모호한 짧은 표현을 별칭으로 선태깅하�
 
 test('선태거는 실제 누락 사례의 명시적인 기술명을 보존한다', () => {
   assert.deepEqual(
+    pretag({ title: 'Linux용 Zoom 클라이언트와 Kotlin Android 앱', description: 'MCP와 Datadog을 사용합니다.' }),
+    ['linux', 'kotlin', 'android', 'mcp', 'datadog'],
+  )
+  assert.deepEqual(
     pretag({ title: 'AI 챗봇 도입과 AX 전환', description: '디지털 전환 전략을 점검합니다.' }),
     ['ai-strategy', 'digital-transformation'],
   )

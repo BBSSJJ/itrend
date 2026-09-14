@@ -15,7 +15,7 @@ async function collectOne(source, remainingLimit) {
   const AdapterClass = ADAPTERS[source.adapterType]
   if (!AdapterClass) {
     console.warn(`[SKIP] 알 수 없는 어댑터: ${source.adapterType} (${source.name})`)
-    return { count: 0, error: null }
+    return { count: 0, ids: [], error: null }
   }
 
   const sourceState = state.get(source.id)
@@ -29,7 +29,7 @@ async function collectOne(source, remainingLimit) {
 
     if (articles.length === 0) {
       console.log(`  새 항목 없음`)
-      return { count: 0, error: null }
+      return { count: 0, ids: [], error: null }
     }
 
     const candidates = remainingLimit === undefined ? articles : articles.slice(0, remainingLimit)
