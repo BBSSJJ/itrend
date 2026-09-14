@@ -55,7 +55,10 @@ async function runSummarizerJob({ ids } = {}) {
       ids ?? null,
       {
         params: { limit: BATCH_LIMIT },
-        headers: { 'X-API-Key': API_KEY },
+        headers: {
+          'X-API-Key': API_KEY,
+          'Content-Type': 'application/json',
+        },
       },
     )
 

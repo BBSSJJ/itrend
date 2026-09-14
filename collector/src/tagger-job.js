@@ -22,7 +22,10 @@ async function runTaggerJob({ ids } = {}) {
     // 1. 태깅 대기 기사를 원자적으로 선점
     const { data: articles } = await axios.post(`${BE_API_URL}/api/articles/tagging/claim`, ids ?? null, {
       params: { limit: BATCH_LIMIT },
-      headers: { 'X-API-Key': API_KEY },
+      headers: {
+        'X-API-Key': API_KEY,
+        'Content-Type': 'application/json',
+      },
     })
 
     if (articles.length === 0) {
